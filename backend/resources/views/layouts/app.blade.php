@@ -6,30 +6,161 @@
 
         <title>{{ $title ?? config('app.name') }}</title>
 
+        @if (file_exists(public_path('images/branding/logo.png')))
+            <link rel="icon" type="image/png" href="{{ asset('images/branding/logo.png') }}">
+        @endif
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         @livewireStyles
     </head>
-    <body class="bg-gray-100 min-h-screen">
-        <nav class="bg-white border-b px-6 py-3 flex items-center justify-between">
-            <div class="flex gap-6 items-center">
-                <span class="font-semibold">FitHub Admin</span>
-                <a href="/dashboard/plans" class="text-sm text-gray-600 hover:text-gray-900">Plans</a>
-                <a href="/dashboard/members" class="text-sm text-gray-600 hover:text-gray-900">Members</a>
-                <a href="/dashboard/attendance" class="text-sm text-gray-600 hover:text-gray-900">Attendance</a>
-                <a href="/dashboard/classes" class="text-sm text-gray-600 hover:text-gray-900">Classes</a>
-                <a href="/dashboard/bookings" class="text-sm text-gray-600 hover:text-gray-900">Bookings</a>
-                <a href="/dashboard/progress" class="text-sm text-gray-600 hover:text-gray-900">Progress</a>
-            </div>
-            <form method="POST" action="/logout">
-                @csrf
-                <button type="submit" class="text-sm text-gray-600 hover:text-gray-900">Log out</button>
-            </form>
-        </nav>
+    <body class="bg-chalk min-h-screen font-sans text-ink lg:flex overflow-x-hidden">
+        @php
+            $groups = [
+                'Front Desk' => [
+                    'members' => ['Members', '/dashboard/members'],
+                    'attendance' => ['Attendance', '/dashboard/attendance'],
+                    'classes' => ['Classes', '/dashboard/classes'],
+                    'bookings' => ['Bookings', '/dashboard/bookings'],
+                    'trainers' => ['Trainers', '/dashboard/trainers'],
+                    'lock-devices' => ['Lock', '/dashboard/lock-devices'],
+                ],
+                'Business' => [
+                    'plans' => ['Plans', '/dashboard/plans'],
+                    'payments' => ['Payments', '/dashboard/payments'],
+                    'insight' => ['Insight', '/dashboard/insight'],
+                    'staff' => ['Staff', '/dashboard/staff'],
+                    'activity' => ['Activity', '/dashboard/activity'],
+                    'settings' => ['Settings', '/dashboard/settings'],
+                ],
+            ];
 
-        <main class="p-6">
-            {{ $slot }}
-        </main>
+            $icons = [
+                'plans' => '<path d="M12.586 3H7a2 2 0 0 0-2 2v5.586a1 1 0 0 0 .293.707l8.414 8.414a2 2 0 0 0 2.828 0l5.586-5.586a2 2 0 0 0 0-2.828l-8.414-8.414A1 1 0 0 0 12.586 3Z"/><circle cx="9" cy="9" r="1.3" fill="currentColor" stroke="none"/>',
+                'members' => '<path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="7" r="3.5"/><path d="M21 19v-1a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+                'trainers' => '<path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9" cy="7" r="4"/><path d="m17 11 2 2 4-4"/>',
+                'attendance' => '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/><path d="m9 16 2 2 4-4"/>',
+                'classes' => '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/><path d="M8 15h.01M12 15h.01M16 15h.01M8 18h.01M12 18h.01"/>',
+                'bookings' => '<path d="M6 4a2 2 0 0 0-2 2v14l8-5 8 5V6a2 2 0 0 0-2-2H6Z"/>',
+                'insight' => '<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="0.5"/><rect x="13" y="8" width="3" height="10" rx="0.5"/><rect x="18.5" y="5" width="3" height="13" rx="0.5"/>',
+                'staff' => '<path d="M12 3 4 6v6c0 5 3.5 8.5 8 9 4.5-.5 8-4 8-9V6l-8-3Z"/>',
+                'activity' => '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+                'lock-devices' => '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+                'payments' => '<rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/>',
+                'settings' => '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/>',
+            ];
+
+            $visibleKeys = match (auth()->user()->role) {
+                'owner' => null,
+                'staff' => ['members', 'attendance', 'classes', 'bookings', 'trainers', 'lock-devices', 'plans', 'payments'],
+                'trainer' => ['members', 'attendance', 'classes', 'bookings'],
+                default => [],
+            };
+
+            if ($visibleKeys !== null) {
+                foreach ($groups as $groupName => $items) {
+                    $groups[$groupName] = collect($items)->only($visibleKeys)->all();
+
+                    if (empty($groups[$groupName])) {
+                        unset($groups[$groupName]);
+                    }
+                }
+            }
+
+            $allItems = collect($groups)->collapse();
+            $currentKey = $allItems->keys()->first(fn ($key) => request()->is('dashboard/'.$key.'*'));
+            $currentSection = collect($groups)->first(fn ($items) => isset($items[$currentKey]));
+            $currentLabel = $currentKey && $currentSection ? $currentSection[$currentKey][0] : null;
+            $currentGroupName = collect($groups)->search(fn ($items) => isset($items[$currentKey]));
+        @endphp
+
+        {{-- Desktop sidebar --}}
+        <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-ink border-r-[3px] border-gold z-20">
+            <div class="flex items-center gap-3 px-6 h-16 border-b border-white/10 shrink-0">
+                @include('partials.logo')
+                <span class="font-display font-semibold text-chalk tracking-wide">FITHUB</span>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-6">
+                @foreach ($groups as $groupName => $items)
+                    <div>
+                        <p class="px-3 mb-2 text-[11px] font-display uppercase tracking-[0.15em] text-steel-2">{{ $groupName }}</p>
+                        <div class="space-y-0.5">
+                            @foreach ($items as $key => [$label, $href])
+                                @php $active = request()->is('dashboard/'.$key.'*'); @endphp
+                                <a href="{{ $href }}"
+                                   class="flex items-center gap-3 px-3 py-2 rounded font-display uppercase text-sm tracking-wide border-l-2 transition
+                                          {{ $active ? 'text-chalk border-gold bg-white/5' : 'text-steel-2 border-transparent hover:text-chalk hover:bg-white/5' }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px] shrink-0">
+                                        {!! $icons[$key] !!}
+                                    </svg>
+                                    {{ $label }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </nav>
+
+            <div class="p-4 border-t border-white/10 shrink-0">
+                <a href="/account" class="flex items-center gap-3 px-2 mb-3 rounded hover:bg-white/5 transition py-1 -mx-1">
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-gold to-gold-2 flex items-center justify-center shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 text-ink">
+                            <circle cx="12" cy="8" r="4"/>
+                            <path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7"/>
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-chalk text-sm font-medium truncate">{{ auth()->user()->name }}</p>
+                        <p class="text-steel-2 text-xs font-mono uppercase truncate">{{ auth()->user()->role }}</p>
+                    </div>
+                </a>
+                <form method="POST" action="/logout">
+                    @csrf
+                    <button type="submit" class="w-full text-left font-display uppercase text-xs tracking-wide text-steel-2 hover:text-tape transition px-2">Log out</button>
+                </form>
+            </div>
+        </aside>
+
+        {{-- Mobile top bar --}}
+        <div class="lg:hidden sticky top-0 z-20 bg-ink border-b-[3px] border-gold">
+            <div class="px-4 h-14 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    @include('partials.logo')
+                    <span class="font-display font-semibold text-chalk tracking-wide">FITHUB</span>
+                </div>
+                <form method="POST" action="/logout">
+                    @csrf
+                    <button type="submit" class="font-display uppercase text-xs tracking-wide text-steel-2 hover:text-chalk transition">Log out</button>
+                </form>
+            </div>
+            <nav class="flex overflow-x-auto px-2 pb-2 gap-1 no-scrollbar">
+                @foreach ($allItems as $key => [$label, $href])
+                    <a href="{{ $href }}"
+                       class="shrink-0 px-3 py-1.5 rounded font-display uppercase text-xs tracking-wide transition
+                              {{ request()->is('dashboard/'.$key.'*') ? 'text-ink bg-gold' : 'text-steel-2 hover:text-chalk' }}">
+                        {{ $label }}
+                    </a>
+                @endforeach
+            </nav>
+        </div>
+
+        {{-- Main content --}}
+        <div class="flex-1 lg:pl-64 min-w-0">
+            @if ($currentLabel)
+                <header class="hidden lg:flex items-center justify-between px-8 pt-8 pb-6">
+                    <div>
+                        <p class="fh-eyebrow">{{ $currentGroupName }}</p>
+                        <h1 class="font-display font-bold uppercase text-2xl tracking-tight text-ink">{{ $currentLabel }}</h1>
+                    </div>
+                    <p class="font-mono text-xs text-steel uppercase tracking-wide">{{ now()->format('D, M j') }}</p>
+                </header>
+            @endif
+
+            <main class="p-6 lg:px-8 lg:pb-8 lg:pt-0">
+                {{ $slot }}
+            </main>
+        </div>
 
         @livewireScripts
     </body>

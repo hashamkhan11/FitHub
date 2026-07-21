@@ -8,7 +8,7 @@ FitHub is a two-sided gym management system. This Flutter app is the member-faci
 - **State management:** Riverpod
 - **HTTP:** `http` package talking to the Laravel REST API
 - **Auth:** Bearer token (Laravel Sanctum), persisted with `shared_preferences`
-- **Push notifications:** Firebase Cloud Messaging (`firebase_core`, `firebase_messaging`)
+- **Push notifications:** Firebase Cloud Messaging (`firebase_core`, `firebase_messaging`), with `flutter_local_notifications` to display incoming messages while the app is in the foreground
 - **Charts:** `fl_chart` for the progress screen
 - **QR code display:** `flutter_svg` (rendered server-side, fetched as SVG)
 
@@ -66,7 +66,17 @@ The APK is output to `build/app/outputs/flutter-apk/app-debug.apk`.
 
 ### Notifications on Android 13+
 
-The app requests the `POST_NOTIFICATIONS` runtime permission on first login (in addition to the manifest declaration already in `AndroidManifest.xml`). Notifications from a backgrounded/terminated app show in the system tray automatically; while the app is in the foreground, FCM notification payloads don't auto-display.
+The app requests the `POST_NOTIFICATIONS` runtime permission on first login (in addition to the manifest declaration already in `AndroidManifest.xml`). Notifications from a backgrounded/terminated app show in the system tray automatically via FCM. For the foreground case — FCM notification payloads never auto-display while the app is open — `initPushNotifications()` in `push_notifications.dart` listens on `FirebaseMessaging.onMessage` and shows the notification manually via `flutter_local_notifications`.
+
+`flutter_local_notifications` requires Android core library desugaring; this is already enabled in `android/app/build.gradle.kts` (`isCoreLibraryDesugaringEnabled = true` + the `desugar_jdk_libs` dependency) — don't remove it or release builds will fail with a "requires core library desugaring" AAR metadata error.
+
+## Testing
+
+```bash
+flutter test
+```
+
+`test/api_client_test.dart` covers `ApiClient` (login, class booking, fetching classes/attendance/measurements, and error-message extraction) using `package:http/testing.dart`'s `MockClient` — no backend server needed. `test/widget_test.dart` is a basic widget test asserting the login screen shows when logged out.
 
 ## Project Structure
 
@@ -77,14 +87,18 @@ lib/
 │   └── auth_provider.dart     # Login/session state, triggers FCM token registration
 ├── services/
 │   ├── api_client.dart        # All backend API calls
-│   └── push_notifications.dart # FCM permission + token registration
+│   └── push_notifications.dart # FCM permission + token registration + foreground local-notification display
+├── widgets/
+│   └── logout_action.dart     # Shared AppBar logout button, used on every tab
 └── screens/
     ├── login_screen.dart
+    ├── main_shell.dart         # Bottom nav bar shell (Home/Classes/Attendance/Progress)
     ├── home_screen.dart        # Membership + QR code
     ├── classes_screen.dart     # Browse/book/cancel classes
+    ├── attendance_screen.dart  # Check-in/check-out history
     └── progress_screen.dart    # Log measurements + progress chart
 ```
 
 ## Notes
 
-Feature scope follows the fixed FitHub client project spec — this is a real internship deliverable, not a starter template.
+Feature scope follows the fixed FitHub client project spec.

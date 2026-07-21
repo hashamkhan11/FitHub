@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('app:send-class-reminders')->everyFiveMinutes();
 Schedule::command('app:send-progress-reminders')->weekly();
+Schedule::command('app:send-renewal-reminders')->daily();

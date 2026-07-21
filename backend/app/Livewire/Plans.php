@@ -2,7 +2,9 @@
 
 namespace App\Livewire;
 
+use App\Models\ActivityLog;
 use App\Models\Plan;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -23,6 +25,11 @@ class Plans extends Component
 
     public bool $is_active = true;
 
+    public function mount(): void
+    {
+        Gate::authorize('view-plans');
+    }
+
     public function render()
     {
         return view('livewire.plans', [
@@ -32,6 +39,8 @@ class Plans extends Component
 
     public function save(): void
     {
+        Gate::authorize('manage-plans');
+
         $this->validate();
 
         $data = [
@@ -54,6 +63,8 @@ class Plans extends Component
 
     public function edit(int $planId): void
     {
+        Gate::authorize('manage-plans');
+
         $plan = Plan::where('gym_id', auth()->user()->gym_id)->findOrFail($planId);
 
         $this->editingId = $plan->id;
@@ -65,7 +76,20 @@ class Plans extends Component
 
     public function delete(int $planId): void
     {
-        Plan::where('gym_id', auth()->user()->gym_id)->findOrFail($planId)->delete();
+        Gate::authorize('manage-plans');
+
+        $plan = Plan::where('gym_id', auth()->user()->gym_id)->findOrFail($planId);
+
+        if ($plan->memberships()->withTrashed()->exists()) {
+            $this->addError('deletePlan', 'This plan has members enrolled (past or present) and can\'t be deleted. Mark it inactive instead.');
+
+            return;
+        }
+
+        $name = $plan->name;
+        $plan->delete();
+
+        ActivityLog::record('plan.deleted', "Deleted plan {$name}.");
     }
 
     public function resetForm(): void

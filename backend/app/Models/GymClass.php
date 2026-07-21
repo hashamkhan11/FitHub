@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class GymClass extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'gym_id',
         'name',
@@ -38,34 +42,41 @@ class GymClass extends Model
 
     public function book(Member $member): Booking
     {
-        $alreadyActive = $this->bookings()
-            ->where('member_id', $member->id)
-            ->whereIn('status', ['booked', 'waitlisted'])
-            ->exists();
+        return DB::transaction(function () use ($member) {
+            $class = static::where('id', $this->id)->lockForUpdate()->firstOrFail();
 
-        if ($alreadyActive) {
-            throw new \DomainException('This member already has a booking for this class.');
-        }
+            $alreadyActive = $class->bookings()
+                ->where('member_id', $member->id)
+                ->whereIn('status', ['booked', 'waitlisted'])
+                ->exists();
 
-        $bookedCount = $this->bookings()->where('status', 'booked')->count();
-        $status = $bookedCount < $this->capacity ? 'booked' : 'waitlisted';
+            if ($alreadyActive) {
+                throw new \DomainException('This member already has a booking for this class.');
+            }
 
-        return $this->bookings()->create([
-            'member_id' => $member->id,
-            'status' => $status,
-        ]);
+            $bookedCount = $class->bookings()->where('status', 'booked')->count();
+            $status = $bookedCount < $class->capacity ? 'booked' : 'waitlisted';
+
+            return $class->bookings()->create([
+                'member_id' => $member->id,
+                'status' => $status,
+            ]);
+        });
     }
 
-    public function cancelBooking(Booking $booking): void
+    public function cancelBooking(Booking $booking): ?Booking
     {
         $wasBooked = $booking->status === 'booked';
 
         $booking->update(['status' => 'cancelled']);
 
         if (! $wasBooked) {
-            return;
+            return null;
         }
 
-        $this->bookings()->where('status', 'waitlisted')->oldest()->first()?->update(['status' => 'booked']);
+        $promoted = $this->bookings()->where('status', 'waitlisted')->oldest()->first();
+        $promoted?->update(['status' => 'booked']);
+
+        return $promoted;
     }
 }

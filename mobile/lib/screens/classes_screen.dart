@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/auth_provider.dart';
+import '../theme/app_theme.dart';
+import '../widgets/logout_action.dart';
 
 final classesProvider = FutureProvider.autoDispose((ref) async {
   final client = ref.watch(apiClientProvider);
@@ -41,17 +43,19 @@ class ClassesScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Classes')),
+      appBar: AppBar(title: const Text('CLASSES'), actions: const [LogoutAction()]),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(classesProvider),
+        color: AppColors.gold,
+        backgroundColor: AppColors.ink2,
         child: classesAsync.when(
           data: (classes) {
             if (classes.isEmpty) {
               return ListView(
-                children: const [
+                children: [
                   Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text('No upcoming classes.'),
+                    padding: const EdgeInsets.all(24),
+                    child: Text('No upcoming classes.', style: AppTheme.mono(color: AppColors.steel2)),
                   ),
                 ],
               );
@@ -75,30 +79,42 @@ class ClassesScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          gymClass['name'] as String,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                gymClass['name'] as String,
+                                style: AppTheme.display(fontSize: 17, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                            _statusChip(myStatus),
+                          ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 6),
                         if (gymClass['instructor_name'] != null)
-                          Text('Instructor: ${gymClass['instructor_name']}'),
-                        Text(_formatDateTime(startTime)),
-                        Text('$bookedCount/$capacity booked'),
-                        const SizedBox(height: 12),
+                          Text(
+                            gymClass['instructor_name'] as String,
+                            style: const TextStyle(color: AppColors.steel2),
+                          ),
+                        const SizedBox(height: 4),
+                        Text(_formatDateTime(startTime), style: AppTheme.mono(fontSize: 13, color: AppColors.steel2)),
+                        Text('$bookedCount/$capacity booked', style: AppTheme.mono(fontSize: 13, color: AppColors.steel2)),
+                        const SizedBox(height: 14),
                         if (myStatus == 'booked')
-                          FilledButton.tonal(
+                          OutlinedButton(
                             onPressed: () => handleAction(() => client.cancelBooking(myBookingId!)),
-                            child: const Text('Cancel booking'),
+                            child: const Text('CANCEL BOOKING'),
                           )
                         else if (myStatus == 'waitlisted')
                           OutlinedButton(
                             onPressed: () => handleAction(() => client.cancelBooking(myBookingId!)),
-                            child: const Text('Leave waitlist'),
+                            child: const Text('LEAVE WAITLIST'),
                           )
                         else
                           FilledButton(
                             onPressed: () => handleAction(() => client.bookClass(gymClass['id'] as int)),
-                            child: const Text('Book'),
+                            child: const Text('BOOK'),
                           ),
                       ],
                     ),
@@ -108,8 +124,32 @@ class ClassesScreen extends ConsumerWidget {
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('Could not load classes: $err')),
+          error: (err, _) => Center(child: Text('Could not load classes: $err', style: const TextStyle(color: AppColors.tape))),
         ),
+      ),
+    );
+  }
+
+  Widget _statusChip(String? status) {
+    if (status == 'booked') {
+      return _chip('BOOKED', AppColors.turf);
+    }
+    if (status == 'waitlisted') {
+      return _chip('WAITLISTED', AppColors.gold);
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _chip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: AppTheme.display(fontSize: 10, fontWeight: FontWeight.w600, color: color, letterSpacing: 0.5),
       ),
     );
   }

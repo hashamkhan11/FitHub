@@ -1,0 +1,90 @@
+<div class="max-w-[1400px] mx-auto space-y-6">
+    <div class="fh-card max-w-2xl">
+        <h2 class="fh-heading mb-4">Add Staff Account</h2>
+
+        <form wire:submit="addStaff" class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="fh-label">Name</label>
+                <input type="text" wire:model="name" class="fh-input">
+                @error('name') <p class="fh-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label class="fh-label">Email</label>
+                <input type="email" wire:model="email" class="fh-input">
+                @error('email') <p class="fh-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div>
+                <label class="fh-label">Password</label>
+                <input type="password" wire:model="password" class="fh-input">
+                @error('password') <p class="fh-error">{{ $message }}</p> @enderror
+            </div>
+
+            <div class="col-span-2">
+                <button type="submit" class="fh-btn-primary">
+                    Add Staff Account
+                </button>
+            </div>
+        </form>
+    </div>
+
+    @if ($editingStaffId)
+        <div class="fh-card max-w-2xl">
+            <h2 class="fh-heading mb-4">Edit Staff Account</h2>
+
+            <form wire:submit="updateStaff" class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="fh-label">Name</label>
+                    <input type="text" wire:model="edit_name" class="fh-input">
+                    @error('edit_name') <p class="fh-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
+                    <label class="fh-label">Email</label>
+                    <input type="email" wire:model="edit_email" class="fh-input">
+                    @error('edit_email') <p class="fh-error">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="col-span-2 flex gap-2">
+                    <button type="submit" class="fh-btn-primary">Save Changes</button>
+                    <button type="button" wire:click="cancelEdit" class="fh-btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    @endif
+
+    <div class="fh-card-flush">
+        <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead>
+                <tr>
+                    <th class="fh-th">Name</th>
+                    <th class="fh-th">Email</th>
+                    <th class="fh-th"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($staff as $account)
+                    <tr>
+                        <td class="fh-td font-medium">{{ $account->name }}</td>
+                        <td class="fh-td text-steel">{{ $account->email }}</td>
+                        <td class="fh-td flex gap-3">
+                            <button wire:click="startEdit({{ $account->id }})" class="fh-link-action text-gold-2">Edit</button>
+                            <button
+                                wire:click="deleteStaff({{ $account->id }})"
+                                wire:confirm="Delete {{ $account->name }}'s staff account?"
+                                class="fh-link-action text-tape"
+                            >Delete</button>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td class="fh-td text-steel" colspan="3">No staff accounts yet.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>

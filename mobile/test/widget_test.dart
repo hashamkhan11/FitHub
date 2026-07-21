@@ -8,7 +8,7 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: FitHubApp()));
     await tester.pump();
 
-    expect(find.text('FitHub'), findsOneWidget);
-    expect(find.text('Log in'), findsOneWidget);
+    expect(find.text('FITHUB'), findsOneWidget);
+    expect(find.text('LOG IN'), findsOneWidget);
   });
 }

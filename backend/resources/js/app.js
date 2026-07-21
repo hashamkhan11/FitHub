@@ -2,6 +2,10 @@ import './bootstrap';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { Chart } from 'chart.js/auto';
 
+Chart.defaults.font.family = '"IBM Plex Mono", ui-monospace, Consolas, monospace';
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#5B6472';
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('qrScanner', () => ({
         scanner: null,
@@ -19,32 +23,33 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
-    Alpine.data('progressChart', (measurements) => ({
+    Alpine.data('barChart', (labels, data, label, color, wholeNumbers = false) => ({
         chart: null,
 
         init() {
+            const yTicks = { color: '#5B6472' };
+
+            if (wholeNumbers) {
+                // Counts of people (check-ins) can't be fractional — force integer-only
+                // gridlines instead of letting Chart.js pick "nice" steps like 2.5.
+                const maxValue = Math.max(1, ...data);
+                yTicks.stepSize = Math.max(1, Math.ceil(maxValue / 5));
+                yTicks.precision = 0;
+            }
+
             this.chart = new Chart(this.$refs.canvas.getContext('2d'), {
-                type: 'line',
+                type: 'bar',
                 data: {
-                    labels: measurements.map((m) => m.recorded_at),
-                    datasets: [
-                        {
-                            label: 'Weight (kg)',
-                            data: measurements.map((m) => m.weight_kg),
-                            borderColor: '#2563eb',
-                            tension: 0.3,
-                        },
-                        {
-                            label: 'Body fat (%)',
-                            data: measurements.map((m) => m.body_fat_percentage),
-                            borderColor: '#dc2626',
-                            tension: 0.3,
-                        },
-                    ],
+                    labels,
+                    datasets: [{ label, data, backgroundColor: color, borderRadius: 2, maxBarThickness: 28 }],
                 },
                 options: {
                     responsive: true,
-                    scales: { y: { beginAtZero: false } },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: yTicks, grid: { color: '#E7E8E2' }, border: { display: false } },
+                        x: { grid: { display: false }, border: { display: false } },
+                    },
                 },
             });
         },

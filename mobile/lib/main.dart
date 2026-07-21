@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers/auth_provider.dart';
-import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/main_shell.dart';
+import 'services/push_notifications.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await initPushNotifications();
   runApp(const ProviderScope(child: FitHubApp()));
 }
 
@@ -21,8 +24,8 @@ class FitHubApp extends ConsumerWidget {
 
     return MaterialApp(
       title: 'FitHub',
-      theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
-      home: auth.isLoggedIn ? const HomeScreen() : const LoginScreen(),
+      theme: AppTheme.theme,
+      home: auth.isLoggedIn ? const MainShell() : const LoginScreen(),
     );
   }
 }

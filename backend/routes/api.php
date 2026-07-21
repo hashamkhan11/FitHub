@@ -2,13 +2,18 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClassController;
+use App\Http\Controllers\Api\LockController;
 use App\Http\Controllers\Api\MemberController;
+use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::post('/forgot-password', [PasswordResetController::class, 'sendOtp'])->middleware('throttle:3,1');
+Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:6,1');
+
+Route::middleware(['auth:sanctum', 'gym.active'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/member', function (Request $request) {
@@ -18,10 +23,25 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/member/qr', [MemberController::class, 'qr']);
     Route::get('/member/membership', [MemberController::class, 'membership']);
     Route::post('/member/fcm-token', [MemberController::class, 'updateFcmToken']);
+    Route::get('/member/attendance', [MemberController::class, 'attendance']);
     Route::get('/member/measurements', [MemberController::class, 'measurements']);
     Route::post('/member/measurements', [MemberController::class, 'storeMeasurement']);
+    Route::put('/member/profile', [MemberController::class, 'updateProfile']);
+    Route::post('/member/photo', [MemberController::class, 'updatePhoto']);
+    Route::post('/member/change-password', [MemberController::class, 'changePassword']);
 
     Route::get('/classes', [ClassController::class, 'index']);
     Route::post('/classes/{class}/book', [ClassController::class, 'book']);
     Route::post('/bookings/{booking}/cancel', [ClassController::class, 'cancel']);
+
+    Route::get('/lock/devices', [LockController::class, 'devices']);
+    Route::post('/lock/devices/{device}/unlock', [LockController::class, 'unlock']);
+});
+
+// Device-facing routes: authenticated by a per-device token header inside the
+// controller (not Sanctum) since the ESP32 has no user session, only a secret
+// issued when the device was registered.
+Route::middleware('throttle:120,1')->group(function () {
+    Route::get('/lock/poll', [LockController::class, 'pollCommands']);
+    Route::post('/lock/commands/{command}/ack', [LockController::class, 'ackCommand']);
 });

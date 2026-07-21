@@ -2,7 +2,10 @@
 
 namespace App\Livewire;
 
+use App\Models\ActivityLog;
+use App\Models\Attendance;
 use App\Models\GymClass;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -29,21 +32,62 @@ class Classes extends Component
 
     public bool $is_active = true;
 
+    public function mount(): void
+    {
+        Gate::authorize('view-classes');
+    }
+
     public function render()
     {
+        $gymId = auth()->user()->gym_id;
+
+        $classes = GymClass::where('gym_id', $gymId)
+            ->withCount([
+                'bookings as booked_count' => fn ($query) => $query->where('status', 'booked'),
+                'bookings as waitlisted_count' => fn ($query) => $query->where('status', 'waitlisted'),
+            ])
+            ->with(['bookings' => fn ($query) => $query->where('status', 'booked')])
+            ->orderBy('start_time')
+            ->get();
+
+        $this->attachNoShowCounts($classes, $gymId);
+
         return view('livewire.classes', [
-            'classes' => GymClass::where('gym_id', auth()->user()->gym_id)
-                ->withCount([
-                    'bookings as booked_count' => fn ($query) => $query->where('status', 'booked'),
-                    'bookings as waitlisted_count' => fn ($query) => $query->where('status', 'waitlisted'),
-                ])
-                ->orderBy('start_time')
-                ->get(),
+            'classes' => $classes,
         ]);
+    }
+
+    /**
+     * A booked member counts as attended if they checked into the gym on the
+     * class's date — there's no per-class scan, only the front-desk QR check-in.
+     */
+    private function attachNoShowCounts($classes, int $gymId): void
+    {
+        $pastClasses = $classes->filter(fn ($class) => $class->start_time->isPast());
+        $memberIds = $pastClasses->flatMap->bookings->pluck('member_id')->unique();
+
+        $attendedDatesByMember = Attendance::where('gym_id', $gymId)
+            ->whereIn('member_id', $memberIds)
+            ->get()
+            ->groupBy('member_id')
+            ->map(fn ($rows) => $rows->pluck('checked_in_at')->map->toDateString()->unique());
+
+        foreach ($pastClasses as $class) {
+            $classDate = $class->start_time->toDateString();
+
+            $attended = $class->bookings->filter(
+                fn ($booking) => $attendedDatesByMember->get($booking->member_id, collect())->contains($classDate)
+            )->count();
+
+            $class->attended_count = $attended;
+            $class->no_show_count = $class->booked_count - $attended;
+        }
     }
 
     public function save(): void
     {
+        Gate::authorize('manage-classes');
+
         $this->validate();
 
         $data = [
@@ -81,7 +125,13 @@ class Classes extends Component
 
     public function delete(int $classId): void
     {
-        GymClass::where('gym_id', auth()->user()->gym_id)->findOrFail($classId)->delete();
+        Gate::authorize('manage-classes');
+
+        $class = GymClass::where('gym_id', auth()->user()->gym_id)->findOrFail($classId);
+        $name = $class->name;
+        $class->delete();
+
+        ActivityLog::record('class.deleted', "Deleted class {$name}.");
     }
 
     public function resetForm(): void

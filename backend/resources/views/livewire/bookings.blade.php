@@ -1,7 +1,7 @@
-<div class="max-w-4xl mx-auto space-y-6">
-    <div class="bg-white rounded shadow p-6">
-        <label class="block text-sm mb-1">Class</label>
-        <select wire:change="selectClass($event.target.value)" class="w-full border rounded px-3 py-2">
+<div class="max-w-[1400px] mx-auto space-y-6">
+    <div class="fh-card max-w-2xl">
+        <label class="fh-label">Class</label>
+        <select wire:change="selectClass($event.target.value)" class="fh-input">
             @foreach ($classes as $class)
                 <option value="{{ $class->id }}" @selected($classId === $class->id)>
                     {{ $class->name }} — {{ $class->start_time->format('D, M j g:ia') }}
@@ -11,59 +11,61 @@
     </div>
 
     @if ($selectedClass)
-        <div class="bg-white rounded shadow p-6">
-            <h2 class="font-semibold mb-4">Add booking to {{ $selectedClass->name }}</h2>
+        <div class="fh-card max-w-2xl">
+            <h2 class="fh-heading mb-4">Add booking to {{ $selectedClass->name }}</h2>
 
             <form wire:submit="addBooking" class="flex gap-3 items-start">
                 <div class="flex-1">
-                    <select wire:model="memberId" class="w-full border rounded px-3 py-2">
+                    <select wire:model="memberId" class="fh-input">
                         <option value="">Select member…</option>
                         @foreach ($members as $member)
                             <option value="{{ $member->id }}">{{ $member->name }}</option>
                         @endforeach
                     </select>
-                    @error('memberId') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+                    @error('memberId') <p class="fh-error">{{ $message }}</p> @enderror
                 </div>
 
-                <button type="submit" class="bg-blue-600 text-white rounded px-4 py-2">Book</button>
+                <button type="submit" class="fh-btn-primary">Book</button>
             </form>
         </div>
 
-        <div class="bg-white rounded shadow">
-            <table class="w-full text-sm">
+        <div class="fh-card-flush">
+            <div class="overflow-x-auto">
+            <table class="w-full">
                 <thead>
-                    <tr class="border-b text-left">
-                        <th class="p-3">Member</th>
-                        <th class="p-3">Status</th>
-                        <th class="p-3"></th>
+                    <tr>
+                        <th class="fh-th">Member</th>
+                        <th class="fh-th">Status</th>
+                        <th class="fh-th"></th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($bookings as $booking)
-                        <tr class="border-b">
-                            <td class="p-3">{{ $booking->member->name }}</td>
-                            <td class="p-3">
+                        <tr>
+                            <td class="fh-td font-medium">{{ $booking->member->name }}</td>
+                            <td class="fh-td">
                                 @if ($booking->status === 'booked')
-                                    <span class="text-green-700">Booked</span>
+                                    <span class="fh-pill-good">Booked</span>
                                 @else
-                                    <span class="text-amber-600">Waitlisted</span>
+                                    <span class="fh-pill-warn">Waitlisted</span>
                                 @endif
                             </td>
-                            <td class="p-3">
-                                <button wire:click="cancelBooking({{ $booking->id }})" wire:confirm="Cancel this booking?" class="text-red-600">
+                            <td class="fh-td">
+                                <button wire:click="cancelBooking({{ $booking->id }})" wire:confirm="Cancel this booking?" class="fh-link-action text-tape">
                                     Cancel
                                 </button>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td class="p-3 text-gray-500" colspan="3">No bookings yet.</td>
+                            <td class="fh-td text-steel" colspan="3">No bookings yet.</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+            </div>
         </div>
     @else
-        <p class="text-gray-500">No classes yet — create one on the Classes page first.</p>
+        <p class="text-steel">No classes yet — create one on the Classes page first.</p>
     @endif
 </div>

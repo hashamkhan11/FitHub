@@ -19,10 +19,10 @@ Gym, Member, Plan, Membership, Attendance, Class, Booking, Measurement.
 
 ## Delivery Phases
 
-1. **Core** — admin panel, member management, plans, QR-code attendance, member plan/QR view ✅
-2. **Classes** — class scheduling, in-app booking, capacity & waitlists, class reminders (FCM) ✅
-3. **Progress** — body-measurement logging, progress charts, weekly progress reminders (FCM) ✅
-4. **Insight** — admin dashboards, revenue & occupancy reports, payment tracking ⏳ (not started)
+1. **Core** — admin panel, member management, plans, QR-code attendance, member plan/QR view, renewal-expiry reminders (FCM) ✅
+2. **Classes** — class scheduling, in-app booking, capacity & waitlists, booking confirmations + class reminders (FCM) ✅
+3. **Progress** — body-measurement logging (member-private), progress charts, weekly progress reminders (FCM) ✅
+4. **Insight** — admin dashboards, revenue & occupancy reports, payment tracking ✅
 
 ## Setup
 
@@ -59,7 +59,7 @@ php artisan migrate
 
 ### 4. Firebase (push notifications)
 
-Push notifications (class reminders, progress reminders) require a Firebase service account:
+Push notifications (booking confirmations, class reminders, progress reminders, renewal reminders) require a Firebase service account:
 
 1. Download the service account JSON from the Firebase console for the project.
 2. Place it at `storage/app/firebase/service-account.json` (this path is git-ignored — never commit it).
@@ -84,10 +84,13 @@ Binding to `0.0.0.0` lets a physical phone on the same Wi-Fi/LAN reach the API (
 
 ### 7. Scheduled reminders
 
-Two scheduled commands send push notifications:
+Three scheduled commands send push notifications:
 
 - `app:send-class-reminders` — every 5 minutes, notifies members with a booked class starting within the hour.
 - `app:send-progress-reminders` — weekly, notifies members who haven't logged a measurement in 7 days.
+- `app:send-renewal-reminders` — daily, notifies members whose membership expires within the next 3 days.
+
+Booking confirmations (booked or waitlisted) and waitlist-promotion notices are sent immediately, inline in `Api\ClassController`, not on a schedule.
 
 Windows has no cron, so the scheduler needs a long-running worker to actually fire:
 
@@ -96,6 +99,16 @@ php artisan schedule:work
 ```
 
 (Or register `php artisan schedule:run` in Windows Task Scheduler to run every minute.)
+
+## Testing
+
+Tests run against a dedicated `fithub_testing` MySQL database (configured in `phpunit.xml`) so they never touch the `fithub` dev database — create it once with `mysql -u root -e "CREATE DATABASE IF NOT EXISTS fithub_testing"`, then:
+
+```bash
+php artisan test
+```
+
+Coverage: auth (login/logout/token revocation), class booking (capacity, waitlisting, cancellation promoting the next waitlisted member), measurement privacy (a member only ever sees their own), the attendance check-in/check-out toggle (including the active-membership check), the renewal-reminder command, and the `Membership`/`GymClass` booking domain logic directly. Firebase Cloud Messaging calls are faked in tests via `Tests\Concerns\FakesFirebase` (binds a Mockery spy to the `firebase.manager` container key), so no real service account or network access is needed.
 
 ## Admin Panel Routes
 
@@ -106,10 +119,10 @@ All under `auth:web` middleware, reachable in the browser after logging in at `/
 | `/dashboard/plans` | Manage membership plans |
 | `/dashboard/members` | Enroll & manage members |
 | `/dashboard/members/{member}/qr` | View a member's QR code |
-| `/dashboard/attendance` | Scan member QR codes to check them in |
+| `/dashboard/attendance` | Scan member QR codes to check members in/out |
 | `/dashboard/classes` | Manage classes/schedule |
 | `/dashboard/bookings` | View class bookings |
-| `/dashboard/progress` | View a member's measurement history & progress chart, log new measurements |
+| `/dashboard/insight` | Dashboards: check-ins, peak hours, membership/renewal stats, class fill rates, revenue by plan, outstanding balances |
 
 ## API Endpoints (used by the mobile app)
 
@@ -129,7 +142,15 @@ All routes except `/login` require a Sanctum bearer token, obtained from `/login
 | POST | `/api/classes/{class}/book` | Book (or waitlist) a class |
 | POST | `/api/bookings/{booking}/cancel` | Cancel a booking |
 
+## Attendance Scanning Behavior
+
+Scanning a member's QR code at `/dashboard/attendance` toggles their attendance state rather than always creating a new check-in:
+
+- If the member has an open attendance record (checked in today, not yet checked out), scanning again sets `checked_out_at` — i.e. it checks them out.
+- Otherwise, scanning validates the member has an active membership (`end_date >= today`) before creating a new attendance row. Members with no active membership are rejected with an on-screen message instead of being checked in.
+
 ## Notes
 
-- Data model and feature scope follow the fixed client project spec — treat it as a real deliverable, not a prototype.
+- Data model and feature scope follow the fixed client project spec.
 - The `storage/app/firebase/service-account.json` credential file must never be committed; it's already covered by `.gitignore`.
+- Per the spec's security requirements, body-measurement data is private to each member — there is no admin panel view of member measurements; that data is only ever read/written through the member's own Sanctum-authenticated API session.

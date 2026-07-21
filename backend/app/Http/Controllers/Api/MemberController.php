@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class MemberController extends Controller
@@ -26,7 +28,12 @@ class MemberController extends Controller
             ->latest('end_date')
             ->first();
 
-        return response()->json(['membership' => $membership]);
+        $trainer = $request->user()->trainer;
+
+        return response()->json([
+            'membership' => $membership,
+            'trainer' => $trainer ? ['name' => $trainer->name, 'email' => $trainer->email] : null,
+        ]);
     }
 
     public function updateFcmToken(Request $request)
@@ -38,6 +45,17 @@ class MemberController extends Controller
         $request->user()->update(['fcm_token' => $validated['fcm_token']]);
 
         return response()->json(['message' => 'Token saved.']);
+    }
+
+    public function attendance(Request $request)
+    {
+        $attendance = $request->user()
+            ->attendances()
+            ->orderByDesc('checked_in_at')
+            ->limit(60)
+            ->get();
+
+        return response()->json(['attendance' => $attendance]);
     }
 
     public function measurements(Request $request)
@@ -69,5 +87,52 @@ class MemberController extends Controller
         ]);
 
         return response()->json(['measurement' => $measurement], 201);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $request->user()->update($validated);
+
+        return response()->json(['member' => $request->user()->fresh()]);
+    }
+
+    public function updatePhoto(Request $request)
+    {
+        $request->validate([
+            'photo' => ['required', 'image', 'max:2048'],
+        ]);
+
+        $member = $request->user();
+
+        if ($member->photo_path) {
+            Storage::disk('public')->delete($member->photo_path);
+        }
+
+        $member->update([
+            'photo_path' => $request->file('photo')->store('member-photos', 'public'),
+        ]);
+
+        return response()->json(['member' => $member->fresh()]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'string'],
+            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        if (! Hash::check($validated['current_password'], $request->user()->password)) {
+            return response()->json(['message' => 'Current password is incorrect.'], 422);
+        }
+
+        $request->user()->update(['password' => $validated['new_password']]);
+
+        return response()->json(['message' => 'Password updated.']);
     }
 }

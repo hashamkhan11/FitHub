@@ -1,3 +1,6 @@
 # Editor/tooling metadata not part of the FitHub deliverable
 .claude/
 .github/modernize/
+
+# Firebase service-account keys — never commit
+*firebase-adminsdk*.json
