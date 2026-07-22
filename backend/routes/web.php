@@ -4,9 +4,11 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\MemberQrController;
 use App\Http\Controllers\Platform\PlatformLoginController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\StripeWebhookController;
 use App\Livewire\Account;
 use App\Livewire\Activity;
 use App\Livewire\Attendance;
+use App\Livewire\Billing;
 use App\Livewire\Bookings;
 use App\Livewire\Classes;
 use App\Livewire\GymProfile;
@@ -20,6 +22,7 @@ use App\Livewire\Platform\GymCreate;
 use App\Livewire\Platform\Gyms as PlatformGyms;
 use App\Livewire\Platform\GymShow;
 use App\Livewire\Platform\Overview as PlatformOverview;
+use App\Livewire\Platform\SubscriptionPlans;
 use App\Livewire\Staff;
 use App\Livewire\Trainers;
 use Illuminate\Support\Facades\Route;
@@ -51,8 +54,11 @@ Route::middleware(['auth:web', 'gym.active'])->group(function () {
     Route::get('/dashboard/payments', Payments::class)->name('payments');
     Route::get('/dashboard/payments/{payment}/receipt', [ReceiptController::class, 'show'])->name('payments.receipt');
     Route::get('/dashboard/payments/{payment}/receipt.pdf', [ReceiptController::class, 'pdf'])->name('payments.receipt.pdf');
+    Route::get('/dashboard/billing', Billing::class)->name('billing');
     Route::get('/account', Account::class)->name('account');
 });
+
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('cashier.webhook');
 
 // RankSol platform admin panel — separate 'platform' guard, isolated from gym owner/staff auth.
 Route::get('/ranksol/login', [PlatformLoginController::class, 'create'])->middleware('guest:platform')->name('platform.login');
@@ -64,5 +70,6 @@ Route::middleware('auth:platform')->group(function () {
     Route::get('/ranksol/gyms/new', GymCreate::class)->name('platform.gyms.new');
     Route::get('/ranksol/gyms/{gym}', GymShow::class)->name('platform.gyms.show');
     Route::get('/ranksol/gyms', PlatformGyms::class)->name('platform.gyms');
+    Route::get('/ranksol/plans', SubscriptionPlans::class)->name('platform.plans');
     Route::get('/ranksol/activity', PlatformActivity::class)->name('platform.activity');
 });

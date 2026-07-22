@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Cashier\Billable;
 
 class Gym extends Model
 {
-    use HasFactory;
+    use Billable, HasFactory;
 
     protected $fillable = [
         'name',
@@ -27,6 +29,7 @@ class Gym extends Model
         'trial_ends_at',
         'suspended_at',
         'suspended_reason',
+        'subscription_plan_id',
     ];
 
     protected $appends = ['logo_url', 'currency_symbol'];
@@ -75,6 +78,21 @@ class Gym extends Model
     public function platformActivityLogs(): HasMany
     {
         return $this->hasMany(PlatformActivityLog::class);
+    }
+
+    public function subscriptionPlan(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPlan::class);
+    }
+
+    public function stripeName(): string
+    {
+        return $this->name;
+    }
+
+    public function stripeEmail(): ?string
+    {
+        return $this->email;
     }
 
     public function isSuspended(): bool

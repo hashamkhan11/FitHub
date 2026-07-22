@@ -5,6 +5,7 @@ namespace App\Livewire\Platform;
 use App\Mail\WelcomeGymOwnerMail;
 use App\Models\Gym;
 use App\Models\PlatformActivityLog;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -17,11 +18,8 @@ class GymShow extends Component
 {
     public Gym $gym;
 
-    #[Validate('required|string|max:100')]
-    public string $plan_name = '';
-
-    #[Validate('nullable|numeric|min:0')]
-    public string $plan_price = '';
+    #[Validate('required|exists:subscription_plans,id')]
+    public string $subscription_plan_id = '';
 
     #[Validate('required|in:monthly,yearly')]
     public string $billing_cycle = 'monthly';
@@ -31,8 +29,7 @@ class GymShow extends Component
     public function mount(Gym $gym): void
     {
         $this->gym = $gym;
-        $this->plan_name = $gym->plan_name ?? '';
-        $this->plan_price = $gym->plan_price ?? '';
+        $this->subscription_plan_id = (string) ($gym->subscription_plan_id ?? '');
         $this->billing_cycle = $gym->billing_cycle;
     }
 
@@ -40,13 +37,16 @@ class GymShow extends Component
     {
         $this->validate();
 
+        $plan = SubscriptionPlan::findOrFail($this->subscription_plan_id);
+
         $this->gym->update([
-            'plan_name' => $this->plan_name,
-            'plan_price' => $this->plan_price ?: null,
+            'subscription_plan_id' => $plan->id,
+            'plan_name' => $plan->name,
+            'plan_price' => $this->billing_cycle === 'yearly' ? $plan->yearly_price : $plan->monthly_price,
             'billing_cycle' => $this->billing_cycle,
         ]);
 
-        PlatformActivityLog::record('gym.plan_updated', "Updated plan for {$this->gym->name} to {$this->plan_name}.", $this->gym);
+        PlatformActivityLog::record('gym.plan_updated', "Updated plan for {$this->gym->name} to {$plan->name}.", $this->gym);
 
         session()->flash('status', 'Plan updated.');
     }
@@ -107,6 +107,8 @@ class GymShow extends Component
             'owner' => User::where('gym_id', $this->gym->id)->where('role', 'owner')->first(),
             'staffCount' => User::where('gym_id', $this->gym->id)->count(),
             'memberCount' => $this->gym->members()->count(),
+            'plans' => SubscriptionPlan::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'subscription' => $this->gym->subscription('default'),
             'activity' => PlatformActivityLog::where('gym_id', $this->gym->id)
                 ->with('platformAdmin')
                 ->latest('created_at')

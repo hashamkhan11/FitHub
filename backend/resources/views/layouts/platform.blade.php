@@ -15,12 +15,14 @@
             $items = [
                 'overview' => ['Overview', '/ranksol'],
                 'gyms' => ['Gyms', '/ranksol/gyms'],
+                'plans' => ['Plans', '/ranksol/plans'],
                 'activity' => ['Activity', '/ranksol/activity'],
             ];
 
             $icons = [
                 'overview' => '<path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="0.5"/><rect x="13" y="8" width="3" height="10" rx="0.5"/><rect x="18.5" y="5" width="3" height="13" rx="0.5"/>',
                 'gyms' => '<path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/>',
+                'plans' => '<path d="M12.586 3H7a2 2 0 0 0-2 2v5.586a1 1 0 0 0 .293.707l8.414 8.414a2 2 0 0 0 2.828 0l5.586-5.586a2 2 0 0 0 0-2.828l-8.414-8.414A1 1 0 0 0 12.586 3Z"/><circle cx="9" cy="9" r="1.3" fill="currentColor" stroke="none"/>',
                 'activity' => '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
             ];
 

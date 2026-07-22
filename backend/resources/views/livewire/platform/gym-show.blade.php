@@ -41,26 +41,37 @@
             <h2 class="pf-heading text-sm mb-4">Plan</h2>
             <form wire:submit="updatePlan" class="space-y-4">
                 <div>
-                    <label class="pf-label">Plan Name</label>
-                    <input type="text" wire:model="plan_name" class="pf-input">
-                    @error('plan_name') <p class="pf-error">{{ $message }}</p> @enderror
+                    <label class="pf-label">Catalog Plan</label>
+                    <select wire:model="subscription_plan_id" class="pf-input">
+                        @forelse ($plans as $plan)
+                            <option value="{{ $plan->id }}">{{ $plan->name }} — ${{ $plan->monthly_price }}/mo</option>
+                        @empty
+                            <option value="">No plans in the catalog yet</option>
+                        @endforelse
+                    </select>
+                    @error('subscription_plan_id') <p class="pf-error">{{ $message }}</p> @enderror
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="pf-label">Price</label>
-                        <input type="text" wire:model="plan_price" class="pf-input">
-                        @error('plan_price') <p class="pf-error">{{ $message }}</p> @enderror
-                    </div>
-                    <div>
-                        <label class="pf-label">Billing Cycle</label>
-                        <select wire:model="billing_cycle" class="pf-input">
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
-                        </select>
-                    </div>
+                <div>
+                    <label class="pf-label">Billing Cycle</label>
+                    <select wire:model="billing_cycle" class="pf-input">
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
                 </div>
                 <button type="submit" class="pf-btn-primary">Save Plan</button>
             </form>
+
+            <div class="border-t border-ink/10 mt-6 pt-6">
+                <h2 class="pf-heading text-sm mb-3">Stripe Subscription</h2>
+                @if ($subscription)
+                    <p class="text-sm text-ink">Status: <span class="font-mono">{{ $subscription->stripe_status }}</span></p>
+                    @if ($gym->pm_type)
+                        <p class="text-sm text-mist mt-1">Card: {{ ucfirst($gym->pm_type) }} &middot;&middot;&middot;&middot; {{ $gym->pm_last_four }}</p>
+                    @endif
+                @else
+                    <p class="text-sm text-mist">No Stripe subscription yet — the gym owner subscribes from their own dashboard's Billing page.</p>
+                @endif
+            </div>
 
             <div class="border-t border-ink/10 mt-6 pt-6 space-y-3">
                 <h2 class="pf-heading text-sm">Account Actions</h2>

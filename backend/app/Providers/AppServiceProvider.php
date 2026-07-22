@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Cashier\Cashier;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,7 +22,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Cashier::ignoreRoutes();
+
         Gate::define('view-insight', fn (User $user) => $user->role === 'owner');
+        Gate::define('manage-billing', fn (User $user) => $user->role === 'owner');
         Gate::define('manage-plans', fn (User $user) => $user->role === 'owner');
         Gate::define('view-plans', fn (User $user) => in_array($user->role, ['owner', 'staff']));
         Gate::define('manage-staff', fn (User $user) => $user->role === 'owner');
