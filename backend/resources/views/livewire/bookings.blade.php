@@ -53,7 +53,7 @@
                 </thead>
                 <tbody>
                     @forelse ($bookings as $booking)
-                        <tr>
+                        <tr class="fh-tr">
                             <td class="fh-td font-medium">{{ $booking->member->name }}</td>
                             <td class="fh-td">
                                 @if ($booking->status === 'booked')

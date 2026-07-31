@@ -22,9 +22,8 @@ class SignupController extends Controller
 
     public function store(Request $request)
     {
-        // Honeypot: a real visitor never fills this hidden field. Bots that
-        // blindly fill every input do — silently pretend it worked so we
-        // don't tip off the scraper that it was caught.
+        // Honeypot: hidden field real users never fill in, only bots do.
+        // Pretend it worked so the bot doesn't know it got caught.
         if ($request->filled('website')) {
             return redirect('/start-trial');
         }

@@ -317,7 +317,7 @@
             <tbody>
                 @forelse ($members as $member)
                     @php $membership = $member->memberships->first(); @endphp
-                    <tr>
+                    <tr class="fh-tr">
                         <td class="fh-td">
                             <input type="checkbox" wire:model.live="selected" value="{{ $member->id }}" class="accent-gold-2" aria-label="Select {{ $member->name }}">
                         </td>

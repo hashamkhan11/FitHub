@@ -12,10 +12,8 @@ use Illuminate\Http\Request;
 class FingerprintController extends Controller
 {
     /**
-     * Called by the ESP32 the moment its fingerprint sensor reports a match
-     * (matching itself happens on-sensor — only the numeric template ID
-     * reaches us). Authenticated the same way as /lock/poll: a per-device
-     * token in the X-Device-Token header, no user session.
+     * Called by the ESP32 when its fingerprint sensor finds a match. Uses the
+     * same device-token auth as /lock/poll, no user session.
      */
     public function scan(Request $request)
     {

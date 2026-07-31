@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/auth_provider.dart';
-import '../services/api_client.dart';
 import '../theme/app_theme.dart';
 import '../widgets/page_header.dart';
+import '../widgets/zine.dart';
+import 'legal_screen.dart';
 import 'password_screen.dart';
 import 'payment_history_screen.dart';
 import 'profile_screen.dart';
@@ -21,9 +21,14 @@ class SettingsScreen extends ConsumerWidget {
         content: const Text('Are you sure you want to log out?'),
         actions: [
           TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('CANCEL')),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('LOG OUT', style: TextStyle(color: AppColors.tape)),
+          PressScale(
+            onTap: () => Navigator.of(dialogContext).pop(true),
+            child: IgnorePointer(
+              child: TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: Text('LOG OUT', style: AppTheme.body(color: AppColors.tape, fontWeight: FontWeight.w700)),
+              ),
+            ),
           ),
         ],
       ),
@@ -36,13 +41,29 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final client = ref.watch(apiClientProvider);
+    final member = ref.watch(memberProfileProvider).asData?.value;
+    final fullName = (member?['name'] as String?)?.trim() ?? '';
+    final firstName = fullName.isEmpty ? '' : fullName.split(RegExp(r'\s+')).first;
+    final photoUrl = member?['photo_url'] as String?;
+
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
-              child: PageHeader(title: 'Settings', showBackButton: false),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: PageHeader(
+                title: 'Settings',
+                showBackButton: false,
+                leading: Avatar(
+                  photoUrl: photoUrl,
+                  name: firstName,
+                  authToken: client.authToken,
+                  size: 60,
+                  borderWidth: 2.5,
+                ),
+              ),
             ),
             Expanded(
               child: ListView(
@@ -104,7 +125,7 @@ class _SettingsRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -129,14 +150,10 @@ class _SettingsRow extends StatelessWidget {
 class _LegalCard extends StatelessWidget {
   const _LegalCard();
 
-  Future<void> _open(BuildContext context, String path) async {
-    final uri = Uri.parse('${ApiClient.webBaseUrl}$path');
-    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!opened && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open link.')),
-      );
-    }
+  void _open(BuildContext context, String title, List<LegalSection> sections) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => LegalScreen(title: title, sections: sections)),
+    );
   }
 
   @override
@@ -149,9 +166,9 @@ class _LegalCard extends StatelessWidget {
           children: [
             Text('LEGAL', style: AppTheme.display(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 1)),
             const SizedBox(height: 4),
-            _LegalLink(label: 'Terms of Service', onTap: () => _open(context, '/legal/terms')),
-            _LegalLink(label: 'Privacy Policy', onTap: () => _open(context, '/legal/privacy')),
-            _LegalLink(label: 'Delete My Data', onTap: () => _open(context, '/legal/data-deletion')),
+            _LegalLink(label: 'Terms of Service', onTap: () => _open(context, 'Terms of Service', LegalScreen.terms())),
+            _LegalLink(label: 'Privacy Policy', onTap: () => _open(context, 'Privacy Policy', LegalScreen.privacy())),
+            _LegalLink(label: 'Delete My Data', onTap: () => _open(context, 'Delete My Data', LegalScreen.dataDeletion())),
           ],
         ),
       ),
@@ -175,7 +192,7 @@ class _LegalLink extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label, style: AppTheme.mono(fontSize: 13, color: AppColors.ink)),
-            const Icon(Icons.open_in_new, size: 15, color: AppColors.steel),
+            const Icon(Icons.chevron_right, size: 18, color: AppColors.steel),
           ],
         ),
       ),

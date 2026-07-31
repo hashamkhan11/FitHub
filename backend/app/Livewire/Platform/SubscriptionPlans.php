@@ -35,6 +35,8 @@ class SubscriptionPlans extends Component
     #[Validate('nullable|string')]
     public string $features = '';
 
+    public bool $has_hardware_access = false;
+
     public bool $is_active = true;
 
     public function render()
@@ -56,6 +58,7 @@ class SubscriptionPlans extends Component
             'member_limit' => $this->member_limit ?: null,
             'staff_limit' => $this->staff_limit ?: null,
             'features' => $this->features !== '' ? array_values(array_filter(array_map('trim', explode("\n", $this->features)))) : null,
+            'has_hardware_access' => $this->has_hardware_access,
             'is_active' => $this->is_active,
         ];
 
@@ -80,6 +83,7 @@ class SubscriptionPlans extends Component
         $this->member_limit = $plan->member_limit ?? '';
         $this->staff_limit = $plan->staff_limit ?? '';
         $this->features = $plan->features ? implode("\n", $plan->features) : '';
+        $this->has_hardware_access = $plan->has_hardware_access;
         $this->is_active = $plan->is_active;
     }
 
@@ -141,7 +145,7 @@ class SubscriptionPlans extends Component
 
     public function resetForm(): void
     {
-        $this->reset(['editingId', 'name', 'description', 'monthly_price', 'yearly_price', 'member_limit', 'staff_limit', 'features', 'is_active']);
+        $this->reset(['editingId', 'name', 'description', 'monthly_price', 'yearly_price', 'member_limit', 'staff_limit', 'features', 'has_hardware_access', 'is_active']);
         $this->is_active = true;
     }
 }

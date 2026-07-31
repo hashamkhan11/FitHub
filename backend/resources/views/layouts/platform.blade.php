@@ -37,7 +37,7 @@
         @endphp
 
         {{-- Desktop sidebar --}}
-        <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-void border-r border-chalk-3 z-20">
+        <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-4 lg:left-4 lg:rounded-xl bg-chalk/80 backdrop-blur-xl border border-chalk-3 shadow-fh-card z-20">
             <div class="flex items-center gap-3 px-6 h-16 border-b border-chalk-3 shrink-0">
                 <span class="flex items-center gap-2 font-mono font-semibold text-ink tracking-wide text-sm">
                     <span class="w-1.5 h-1.5 rounded-full bg-teal shadow-[0_0_8px_theme(colors.teal.DEFAULT)]" aria-hidden="true"></span>
@@ -49,8 +49,7 @@
                 @foreach ($items as $key => [$label, $href])
                     @php $active = $key === $currentKey; @endphp
                     <a href="{{ $href }}"
-                       class="flex items-center gap-3 px-3 py-2 rounded font-mono text-sm tracking-wide border transition
-                              {{ $active ? 'text-teal bg-gold-soft border-teal/25' : 'text-mist border-transparent hover:text-ink hover:bg-chalk' }}">
+                       class="fh-nav-link {{ $active ? 'fh-nav-link-active' : '' }}">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" class="w-[18px] h-[18px] shrink-0">
                             {!! $icons[$key] !!}
                         </svg>
@@ -94,8 +93,7 @@
             <nav class="flex overflow-x-auto px-2 pb-2 gap-1 no-scrollbar">
                 @foreach ($items as $key => [$label, $href])
                     <a href="{{ $href }}"
-                       class="shrink-0 px-3 py-1.5 rounded font-mono text-xs tracking-wide transition
-                              {{ $key === $currentKey ? 'text-teal bg-gold-soft' : 'text-mist hover:text-ink' }}">
+                       class="fh-nav-pill {{ $key === $currentKey ? 'fh-nav-pill-active' : '' }}">
                         {{ $label }}
                     </a>
                 @endforeach
@@ -103,7 +101,7 @@
         </div>
 
         {{-- Main content --}}
-        <div class="flex-1 lg:pl-64 min-w-0">
+        <div class="flex-1 lg:pl-72 min-w-0">
             <main class="p-6 lg:p-8">
                 {{ $slot }}
             </main>

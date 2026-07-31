@@ -6,14 +6,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * Structural backstop for tenant isolation. Every gym-scoped controller/Livewire
- * component already filters `where('gym_id', ...)` by hand — this trait makes that
- * filter automatic for any query made while a gym owner/staff member (the 'web'
- * guard) is authenticated, so a future query that forgets the manual filter still
- * can't cross into another gym's data. It deliberately only activates for the 'web'
- * guard: console commands, queue workers, the 'platform' guard (RankSol admins, who
- * legitimately need to see any gym), and the Member-facing 'sanctum' guard are all
- * unaffected and keep relying on their existing explicit filters.
+ * Auto-filters queries by gym_id when a gym owner/staff member is logged in,
+ * so one gym's data can never leak into another gym's view. Doesn't affect
+ * platform admins or the mobile app's member login — they filter manually.
  */
 trait BelongsToGym
 {

@@ -91,12 +91,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                         );
                       },
-                      child: const Text('FORGOT PASSWORD?', style: TextStyle(color: AppColors.gold)),
+                      child: Text(
+                        'FORGOT PASSWORD?',
+                        style: AppTheme.mono(color: AppColors.gold, fontWeight: FontWeight.w600, fontSize: 12, letterSpacing: 0.4),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
                   if (_error != null) ...[
-                    Text(_error!, style: const TextStyle(color: AppColors.tape)),
+                    Text(_error!, style: AppTheme.body(color: AppColors.tape)),
                     const SizedBox(height: 16),
                   ],
                   SizedBox(

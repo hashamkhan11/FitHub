@@ -12,11 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('members', function (Blueprint $table) {
-            // MySQL's unique index still blocks a new row from reusing an
-            // email that belongs to a soft-deleted member, since the index
-            // has no concept of deleted_at. Uniqueness is enforced at the
-            // validation layer instead (scoped to exclude trashed rows), and
-            // this becomes a plain index kept for lookup performance only.
+            // A unique index can't see deleted_at, so it blocks reusing an email
+            // from a deleted member. Uniqueness is now checked in validation
+            // instead, and this stays a plain index for lookups only.
             $table->dropUnique(['email']);
             $table->index('email');
         });

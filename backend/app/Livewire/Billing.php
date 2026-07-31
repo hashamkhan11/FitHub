@@ -52,9 +52,7 @@ class Billing extends Component
         }
 
         try {
-            // Embedded UI mode keeps the customer on this page (inside our own layout)
-            // instead of redirecting away to a checkout.stripe.com page. Cashier only
-            // redirects once at the very end, via return_url, after payment completes.
+            // Embedded mode keeps the user on this page instead of redirecting to Stripe.
             $checkout = $gym->newSubscription('default', $priceId)->checkout([
                 'ui_mode' => 'embedded',
                 'return_url' => route('billing').'?checkout=success',

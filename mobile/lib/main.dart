@@ -15,8 +15,7 @@ void main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  // initLocalNotifications() doesn't touch Firebase, so it runs alongside
-  // Firebase.initializeApp() instead of waiting behind it.
+  // This doesn't need Firebase, so it runs at the same time as Firebase setup.
   await Future.wait([Firebase.initializeApp(), initLocalNotifications()]);
   listenForForegroundMessages();
 
@@ -25,8 +24,7 @@ void main() async {
   FlutterNativeSplash.remove();
   runApp(UncontrolledProviderScope(container: container, child: const FitHubApp()));
 
-  // Only matters if the app was cold-launched from a tapped notification, so
-  // it runs after the first frame rather than gating every launch on it.
+  // Only needed if app was opened from a notification tap, so it can wait.
   unawaited(initNotificationTapHandling(container));
 }
 

@@ -1,15 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 
 import '../theme/app_theme.dart';
 
-/// Shared "Pulse" decoration widgets — the status stamp and streak dots that
-/// recur across cards, restyled from the old "Locker Room Zine" identity as
-/// flat hairline-bordered chips instead of torn paper / tape / rubber stamps.
+/// Small shared widgets used across cards: status badge, streak dot, and more.
 
 enum StampVariant { neutral, gold, blue, good, bad, warn }
 
-/// A soft-tint status chip — used for status/booking labels.
+/// Small colored chip used to show a status or booking label.
 class StampBadge extends StatelessWidget {
   const StampBadge({
     super.key,
@@ -46,7 +45,7 @@ class StampBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: colors.bg,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
       ),
       child: Text(
         label.toUpperCase(),
@@ -58,8 +57,7 @@ class StampBadge extends StatelessWidget {
   }
 }
 
-/// A single punch-card day marker for the check-in streak widget: a filled
-/// accent dot for a hit day, a hairline-outlined dot for a miss.
+/// One dot in the check-in streak: filled means present, empty means missed.
 class PunchDot extends StatelessWidget {
   const PunchDot({super.key, required this.filled, this.size = 22});
 
@@ -86,8 +84,7 @@ class PunchDot extends StatelessWidget {
   }
 }
 
-/// The dark gradient "membership ID card" surface reused on the home and
-/// profile screens — a glowing accent disc in the corner, light text.
+/// Dark card style used on Home and Profile, like a membership ID card.
 class MemCard extends StatelessWidget {
   const MemCard({super.key, required this.child, this.padding});
 
@@ -105,8 +102,11 @@ class MemCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [AppColors.paper2, AppColors.voidBg],
         ),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
         border: Border.all(color: AppColors.ink2, width: 1),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 24, offset: const Offset(0, 10)),
+        ],
       ),
       child: Stack(
         children: [
@@ -131,8 +131,7 @@ class MemCard extends StatelessWidget {
   }
 }
 
-/// A staggered fade/slide-up entrance for top-level sections, skipped
-/// entirely when the OS has "reduce motion" enabled.
+/// Fades and slides content in on load. Skipped if reduce-motion is on.
 class Reveal extends StatelessWidget {
   const Reveal({super.key, this.index = 0, required this.child});
 
@@ -145,8 +144,8 @@ class Reveal extends StatelessWidget {
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 350 + index * 80),
-      curve: Curves.easeOutCubic,
+      duration: Duration(milliseconds: 280 + index * 60),
+      curve: Curves.easeOutQuart,
       builder: (context, value, child) {
         return Opacity(
           opacity: value,
@@ -158,9 +157,7 @@ class Reveal extends StatelessWidget {
   }
 }
 
-/// A circular member photo with a gold hairline ring, falling back to a
-/// first-initial monogram when no photo has been uploaded yet. Shared between
-/// the editable avatar on Profile and the read-only one on Home.
+/// Round profile photo with a gold ring. Shows first letter if no photo yet.
 class Avatar extends StatelessWidget {
   const Avatar({
     super.key,
@@ -178,8 +175,7 @@ class Avatar extends StatelessWidget {
   final double size;
   final double borderWidth;
 
-  /// Extra `Positioned` children (e.g. a camera badge, an upload spinner)
-  /// stacked directly on top of the circle by the caller.
+  /// Extra widgets placed on top of the circle, like a camera icon.
   final List<Widget> overlay;
 
   @override
@@ -189,27 +185,112 @@ class Avatar extends StatelessWidget {
         Container(
           width: size,
           height: size,
+          padding: EdgeInsets.all(borderWidth),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.gold, width: borderWidth),
-            color: AppColors.ink2,
           ),
-          clipBehavior: Clip.antiAlias,
-          child: photoUrl != null
-              ? CachedNetworkImage(
-                  imageUrl: photoUrl!,
-                  httpHeaders: {'Authorization': 'Bearer $authToken'},
-                  fit: BoxFit.cover,
-                )
-              : Center(
-                  child: Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: AppTheme.display(fontSize: size * 0.37, color: AppColors.ink),
-                  ),
-                ),
+          child: ClipOval(
+            child: SizedBox(
+              width: size - borderWidth * 2,
+              height: size - borderWidth * 2,
+              child: photoUrl != null
+                  ? CachedNetworkImage(
+                      imageUrl: photoUrl!,
+                      httpHeaders: {'Authorization': 'Bearer $authToken'},
+                      fit: BoxFit.cover,
+                      width: size - borderWidth * 2,
+                      height: size - borderWidth * 2,
+                      errorWidget: (context, url, error) => ColoredBox(
+                        color: AppColors.ink2,
+                        child: Center(
+                          child: Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : '?',
+                            style: AppTheme.display(fontSize: size * 0.37, color: AppColors.ink),
+                          ),
+                        ),
+                      ),
+                    )
+                  : ColoredBox(
+                      color: AppColors.ink2,
+                      child: Center(
+                        child: Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : '?',
+                          style: AppTheme.display(fontSize: size * 0.37, color: AppColors.ink),
+                        ),
+                      ),
+                    ),
+            ),
+          ),
         ),
         ...overlay,
       ],
+    );
+  }
+}
+
+/// Shrinks a button a bit when pressed and gives haptic feedback on tap.
+class PressScale extends StatefulWidget {
+  const PressScale({super.key, required this.onTap, required this.child, this.enabled = true});
+
+  final VoidCallback? onTap;
+  final Widget child;
+  final bool enabled;
+
+  @override
+  State<PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<PressScale> {
+  bool _pressed = false;
+
+  void _setPressed(bool value) {
+    if (!widget.enabled || widget.onTap == null) return;
+    setState(() => _pressed = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    return GestureDetector(
+      onTapDown: (_) => _setPressed(true),
+      onTapCancel: () => _setPressed(false),
+      onTapUp: (_) => _setPressed(false),
+      onTap: widget.enabled
+          ? () {
+              HapticFeedback.mediumImpact();
+              widget.onTap?.call();
+            }
+          : null,
+      child: AnimatedScale(
+        scale: !reduceMotion && _pressed ? 0.96 : 1.0,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// Animates a number counting up to its value, like streak or BMI stats.
+class CountUpNumber extends StatelessWidget {
+  const CountUpNumber({super.key, required this.value, required this.style, this.decimals = 0, this.suffix = ''});
+
+  final num value;
+  final TextStyle style;
+  final int decimals;
+  final String suffix;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.of(context).disableAnimations) {
+      return Text('${value.toStringAsFixed(decimals)}$suffix', style: style);
+    }
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: value.toDouble()),
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.easeOutCubic,
+      builder: (context, animatedValue, _) => Text('${animatedValue.toStringAsFixed(decimals)}$suffix', style: style),
     );
   }
 }

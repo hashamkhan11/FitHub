@@ -87,7 +87,7 @@
             </thead>
             <tbody>
                 @forelse ($recent as $entry)
-                    <tr>
+                    <tr class="fh-tr">
                         <td class="fh-td font-medium">
                             <div class="flex items-center gap-2.5">
                                 @if ($entry->member->photo_url)

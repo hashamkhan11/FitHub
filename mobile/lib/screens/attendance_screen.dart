@@ -12,6 +12,16 @@ final attendanceProvider = FutureProvider.autoDispose((ref) async {
   return client.fetchAttendance();
 });
 
+class AttendanceDateFilterNotifier extends Notifier<DateTime?> {
+  @override
+  DateTime? build() => null;
+
+  void set(DateTime? value) => state = value;
+}
+
+final attendanceDateFilterProvider =
+    NotifierProvider<AttendanceDateFilterNotifier, DateTime?>(AttendanceDateFilterNotifier.new);
+
 class AttendanceScreen extends ConsumerWidget {
   const AttendanceScreen({super.key});
 
@@ -27,6 +37,8 @@ class AttendanceScreen extends ConsumerWidget {
     return '${_months[dt.month - 1]} ${dt.day}, $hour:$minute $period';
   }
 
+  String _formatDate(DateTime dt) => '${_months[dt.month - 1]} ${dt.day}, ${dt.year}';
+
   String _formatDuration(Duration duration) {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
@@ -34,6 +46,20 @@ class AttendanceScreen extends ConsumerWidget {
       return '${hours}h ${minutes}m';
     }
     return '${minutes}m';
+  }
+
+  Future<void> _pickDate(BuildContext context, WidgetRef ref) async {
+    final now = DateTime.now();
+    final current = ref.read(attendanceDateFilterProvider);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current ?? now,
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+    );
+    if (picked != null) {
+      ref.read(attendanceDateFilterProvider.notifier).set(DateTime(picked.year, picked.month, picked.day));
+    }
   }
 
   @override
@@ -44,6 +70,7 @@ class AttendanceScreen extends ConsumerWidget {
     final fullName = (member?['name'] as String?)?.trim() ?? '';
     final firstName = fullName.isEmpty ? '' : fullName.split(RegExp(r'\s+')).first;
     final photoUrl = member?['photo_url'] as String?;
+    final dateFilter = ref.watch(attendanceDateFilterProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -64,6 +91,55 @@ class AttendanceScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _pickDate(context, ref),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: AppColors.paper2,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                          border: Border.all(color: AppColors.ink2, width: 1),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.gold),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                dateFilter == null ? 'Filter by date' : _formatDate(dateFilter),
+                                style: AppTheme.mono(fontSize: 13, color: AppColors.ink),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (dateFilter != null) ...[
+                    const SizedBox(width: 8),
+                    InkWell(
+                      onTap: () => ref.read(attendanceDateFilterProvider.notifier).set(null),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.paper2,
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                          border: Border.all(color: AppColors.ink2, width: 1),
+                        ),
+                        child: const Icon(Icons.close, size: 16, color: AppColors.steel),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async => ref.invalidate(attendanceProvider),
@@ -71,18 +147,30 @@ class AttendanceScreen extends ConsumerWidget {
                 backgroundColor: AppColors.paper2,
                 child: attendanceAsync.when(
                   data: (attendance) {
-                    if (attendance.isEmpty) {
+                    var entries = attendance.cast<Map<String, dynamic>>();
+
+                    if (dateFilter != null) {
+                      entries = entries.where((entry) {
+                        final checkedInAt = DateTime.parse(entry['checked_in_at'] as String).toLocal();
+                        return checkedInAt.year == dateFilter.year &&
+                            checkedInAt.month == dateFilter.month &&
+                            checkedInAt.day == dateFilter.day;
+                      }).toList();
+                    }
+
+                    if (entries.isEmpty) {
                       return ListView(
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(24),
-                            child: Text('No check-ins yet.', style: AppTheme.mono(color: AppColors.steel)),
+                            child: Text(
+                              dateFilter == null ? 'No check-ins yet.' : 'No check-ins on ${_formatDate(dateFilter)}.',
+                              style: AppTheme.mono(color: AppColors.steel),
+                            ),
                           ),
                         ],
                       );
                     }
-
-                    final entries = attendance.cast<Map<String, dynamic>>();
 
                     return Reveal(
                       child: ListView.separated(
@@ -124,7 +212,7 @@ class AttendanceScreen extends ConsumerWidget {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, _) => Center(child: Text('Could not load attendance: $err', style: const TextStyle(color: AppColors.tape))),
+                  error: (err, _) => Center(child: Text('Could not load attendance: $err', style: AppTheme.body(color: AppColors.tape))),
                 ),
               ),
             ),
@@ -146,7 +234,7 @@ class AttendanceScreen extends ConsumerWidget {
       padding: const EdgeInsets.only(bottom: 2),
       child: Row(
         children: [
-          SizedBox(width: 100, child: Text(label, style: const TextStyle(color: AppColors.steel, fontSize: 13))),
+          SizedBox(width: 100, child: Text(label, style: AppTheme.mono(color: AppColors.steel, fontSize: 13))),
           Text(value, style: AppTheme.mono(fontSize: 13)),
         ],
       ),

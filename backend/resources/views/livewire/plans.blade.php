@@ -59,7 +59,7 @@
             </thead>
             <tbody>
                 @forelse ($plans as $plan)
-                    <tr>
+                    <tr class="fh-tr">
                         <td class="fh-td font-medium">{{ $plan->name }}</td>
                         <td class="fh-td-mono">{{ $plan->duration_days }}d</td>
                         <td class="fh-td-mono">{{ $plan->price }}</td>

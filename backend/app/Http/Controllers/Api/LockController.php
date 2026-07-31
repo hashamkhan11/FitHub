@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 class LockController extends Controller
 {
     /**
-     * Devices a member is allowed to see/unlock — every lock at their own gym.
+     * Lists every lock device at the member's own gym.
      */
     public function devices(Request $request)
     {
@@ -61,9 +61,7 @@ class LockController extends Controller
     }
 
     /**
-     * Polled by the mobile app after sending a command, so it can show
-     * "unlocked"/"failed" as soon as the device acknowledges instead of
-     * guessing with a fixed delay.
+     * Mobile app polls this to show "unlocked"/"failed" as soon as the device replies.
      */
     public function commandStatus(Request $request, LockCommand $command)
     {
@@ -73,9 +71,8 @@ class LockController extends Controller
     }
 
     /**
-     * Polled by the ESP32 every few seconds. Authenticated by a per-device
-     * token (not Sanctum) sent in the X-Device-Token header — the device has
-     * no user session, just a long-lived secret issued when it was registered.
+     * The ESP32 polls this every few seconds, using its own device token
+     * (in the X-Device-Token header) instead of a normal user login.
      */
     public function pollCommands(Request $request)
     {
@@ -85,9 +82,8 @@ class LockController extends Controller
 
         $device->update(['last_seen_at' => now()]);
 
-        // A device that reconnects after being offline should never execute
-        // commands queued while it was gone — expire anything stale before
-        // handing back what's left.
+        // Expire old queued commands first, so a device that just reconnected
+        // doesn't run stale commands from while it was offline.
         $device->commands()
             ->where('status', 'pending')
             ->where('expires_at', '<=', now())
@@ -108,9 +104,8 @@ class LockController extends Controller
     {
         $device = LockDevice::findByToken((string) $request->header('X-Device-Token'));
 
-        // Resolve the device token first so an invalid/missing token always
-        // gets a 401, regardless of whether the command ID exists — otherwise
-        // an unauthenticated caller could tell real IDs apart from fake ones.
+        // Check the device token first, so a bad token always gets 401 —
+        // this stops someone guessing real command IDs vs fake ones.
         abort_unless($device !== null, 401);
 
         $command = $device->commands()->find($command);
@@ -131,9 +126,8 @@ class LockController extends Controller
     }
 
     /**
-     * Lets the ESP32 post a human-readable interim status (e.g. "Place finger
-     * again") while a multi-step command like fingerprint enrollment is still
-     * running, so the dashboard can show live progress instead of just a spinner.
+     * Lets the ESP32 send a status update (e.g. "Place finger again") while
+     * a multi-step command like fingerprint enrollment is still running.
      */
     public function progressCommand(Request $request, int $command)
     {

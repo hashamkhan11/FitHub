@@ -34,8 +34,7 @@ class Business extends Component
     }
 
     /**
-     * Yearly plans are normalized to a monthly figure so mixed billing
-     * cycles roll up into one comparable MRR number.
+     * Converts yearly plans to a monthly figure so all plans add up to one MRR number.
      */
     private function monthlyRevenue($gyms): float
     {
@@ -49,9 +48,8 @@ class Business extends Component
     }
 
     /**
-     * Only counts gyms that have actually left the trial one way or another —
-     * a gym still mid-trial hasn't made a decision yet, so including it would
-     * understate the rate.
+     * Only counts gyms that have finished their trial, since trial-in-progress
+     * gyms haven't decided yet.
      */
     private function conversionRate(int $activeCount, int $suspendedCount): ?int
     {
@@ -61,9 +59,7 @@ class Business extends Component
     }
 
     /**
-     * Approximates logo churn from Stripe subscription-canceled events logged
-     * over the trailing 30 days (see StripeWebhookController::syncGymFromStripeEvent),
-     * since gyms don't carry a historical snapshot of past subscriber counts.
+     * Estimates churn from Stripe cancel events in the last 30 days.
      */
     private function churnRate(int $activeCount): array
     {

@@ -107,7 +107,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                           const SizedBox(height: 24),
                           if (_error != null) ...[
-                            Text(_error!, style: const TextStyle(color: AppColors.tape)),
+                            Text(_error!, style: AppTheme.body(color: AppColors.tape)),
                             const SizedBox(height: 16),
                           ],
                           FilledButton(
@@ -250,7 +250,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             decoration: const InputDecoration(labelText: 'Code'),
                             keyboardType: TextInputType.number,
                             maxLength: 6,
-                            style: const TextStyle(letterSpacing: 4),
+                            style: AppTheme.mono(letterSpacing: 4),
                           ),
                           const SizedBox(height: 6),
                           TextField(
@@ -273,7 +273,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             ),
                           ),
                           if (_error != null) ...[
-                            Text(_error!, style: const TextStyle(color: AppColors.tape)),
+                            Text(_error!, style: AppTheme.body(color: AppColors.tape)),
                             const SizedBox(height: 16),
                           ],
                           FilledButton(

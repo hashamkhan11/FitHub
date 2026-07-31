@@ -59,7 +59,7 @@
                 <form method="POST" action="/start-trial" class="space-y-5">
                     @csrf
 
-                    {{-- Honeypot: hidden from real visitors via off-screen positioning, not display:none, since some bots skip fields they detect are hidden that way. --}}
+                    {{-- Honeypot field to catch bots. Hidden off-screen, not display:none. --}}
                     <div class="absolute -left-[9999px]" aria-hidden="true">
                         <label for="website">Website</label>
                         <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">

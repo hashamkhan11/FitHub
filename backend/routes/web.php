@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\SignupController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\MemberQrController;
 use App\Http\Controllers\Platform\PlatformForgotPasswordController;
 use App\Http\Controllers\Platform\PlatformLoginController;
@@ -40,12 +41,38 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('marketing.home', [
         'plans' => SubscriptionPlan::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+        'faqs' => [
+            ['q' => 'Do I need to sign a contract?', 'a' => 'No. FitHub is billed month-to-month (or annually if you prefer), and you can cancel anytime from your dashboard.'],
+            ['q' => 'Can my staff have their own logins?', 'a' => 'Yes. Staff and trainers get scoped logins so they only see what their role needs — you don\'t have to hand over full owner access.'],
+            ['q' => 'Does FitHub handle payments and billing?', 'a' => 'Yes, billing runs on Stripe. Members can see their own invoices and payment history from their account.'],
+            ['q' => 'Can members book classes from their phone?', 'a' => 'Yes. Members use the FitHub app to check their plan, book or cancel a class spot, and see their attendance history.'],
+            ['q' => 'How does check-in work?', 'a' => 'Members check in with a QR code at the front desk — attendance is logged automatically, no paper sign-in sheets.'],
+            ['q' => 'Is there a setup fee or minimum commitment?', 'a' => 'No setup fee. Start with a 14-day free trial, no card required, and only pay if you decide to keep using it.'],
+        ],
     ]);
 });
 
 Route::view('/legal/terms', 'legal.terms')->name('legal.terms');
 Route::view('/legal/privacy', 'legal.privacy')->name('legal.privacy');
 Route::view('/legal/data-deletion', 'legal.data-deletion')->name('legal.data-deletion');
+
+Route::get('/sitemap.xml', function () {
+    $urls = [
+        ['loc' => url('/'), 'priority' => '1.0'],
+        ['loc' => url('/#features'), 'priority' => '0.8'],
+        ['loc' => url('/#pricing'), 'priority' => '0.8'],
+        ['loc' => url('/#faq'), 'priority' => '0.6'],
+        ['loc' => url('/#contact'), 'priority' => '0.6'],
+        ['loc' => route('login'), 'priority' => '0.3'],
+        ['loc' => route('signup'), 'priority' => '0.7'],
+        ['loc' => route('legal.terms'), 'priority' => '0.2'],
+        ['loc' => route('legal.privacy'), 'priority' => '0.2'],
+    ];
+
+    return response()
+        ->view('sitemap', ['urls' => $urls])
+        ->header('Content-Type', 'application/xml');
+});
 
 Route::get('/login', [LoginController::class, 'create'])->middleware('guest')->name('login');
 Route::post('/login', [LoginController::class, 'store'])->middleware(['guest', 'throttle:5,1']);
@@ -58,6 +85,8 @@ Route::post('/reset-password', [ForgotPasswordController::class, 'update'])->mid
 
 Route::get('/start-trial', [SignupController::class, 'create'])->middleware('guest')->name('signup');
 Route::post('/start-trial', [SignupController::class, 'store'])->middleware(['guest', 'throttle:5,1']);
+
+Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:5,1')->name('contact');
 
 Route::get('/email/verify/{id}/{hash}', [VerifyEmailController::class, 'verify'])
     ->middleware(['auth:web', 'signed'])
@@ -78,8 +107,8 @@ Route::middleware(['auth:web', 'gym.active'])->group(function () {
     Route::get('/dashboard/insight', Insight::class)->name('insight');
     Route::get('/dashboard/staff', Staff::class)->name('staff');
     Route::get('/dashboard/activity', Activity::class)->name('activity');
-    Route::get('/dashboard/lock-devices', LockDevices::class)->name('lock-devices');
-    Route::get('/dashboard/fingerprints', Fingerprints::class)->name('fingerprints');
+    Route::get('/dashboard/lock-devices', LockDevices::class)->middleware('gym.hardware')->name('lock-devices');
+    Route::get('/dashboard/fingerprints', Fingerprints::class)->middleware('gym.hardware')->name('fingerprints');
     Route::get('/dashboard/settings', GymProfile::class)->name('settings');
     Route::get('/dashboard/payments', Payments::class)->name('payments');
     Route::get('/dashboard/payments/{payment}/receipt', [ReceiptController::class, 'show'])->name('payments.receipt');
@@ -90,7 +119,7 @@ Route::middleware(['auth:web', 'gym.active'])->group(function () {
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])->name('cashier.webhook');
 
-// RankSol platform admin panel — separate 'platform' guard, isolated from gym owner/staff auth.
+// RankSol platform admin panel — uses its own login, separate from gym owner/staff.
 Route::get('/ranksol/login', [PlatformLoginController::class, 'create'])->middleware('guest:platform')->name('platform.login');
 Route::post('/ranksol/login', [PlatformLoginController::class, 'store'])->middleware(['guest:platform', 'throttle:5,1']);
 Route::post('/ranksol/logout', [PlatformLoginController::class, 'destroy'])->middleware('auth:platform')->name('platform.logout');

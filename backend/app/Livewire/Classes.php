@@ -60,8 +60,7 @@ class Classes extends Component
     }
 
     /**
-     * A booked member counts as attended if they checked into the gym on the
-     * class's date — there's no per-class scan, only the front-desk QR check-in.
+     * A booked member counts as attended if they checked in that day (no per-class scan).
      */
     private function attachNoShowCounts($classes, int $gymId): void
     {

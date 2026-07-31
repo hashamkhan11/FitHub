@@ -91,7 +91,7 @@ class PaymentHistoryScreen extends ConsumerWidget {
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (err, _) => Center(
-                    child: Text('Could not load payment history: $err', style: const TextStyle(color: AppColors.tape)),
+                    child: Text('Could not load payment history: $err', style: AppTheme.body(color: AppColors.tape)),
                   ),
                 ),
               ),

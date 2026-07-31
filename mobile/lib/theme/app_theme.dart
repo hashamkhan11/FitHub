@@ -1,41 +1,43 @@
 import 'package:flutter/material.dart';
 
-/// FitHub's "Pulse" identity — a dense, dark-mode-first operator palette:
-/// cyan accent, hairline borders, no shadows, tabular-numeral figures.
-/// Mirrors the palette used by the web admin (tailwind.config.js) so both
-/// surfaces read as the same brand. The whole app now commits to the dark
-/// ground — there is no separate light "paper" mode anymore.
+/// FitHub's dark theme: navy background, one red accent color. Same colors
+/// as the web admin panel. App is dark-only, there is no light mode.
 class AppColors {
   AppColors._();
 
-  /// Deepest background — scaffold/page bg and one end of gradient panels.
-  static const voidBg = Color(0xFF0D0F12);
+  /// Darkest background color, used for page background and gradients.
+  static const voidBg = Color(0xFF0B0F1A);
 
-  static const paper = Color(0xFF171B20);
-  static const paper2 = Color(0xFF1A1E23);
-  static const paper3 = Color(0xFF262B31);
+  static const paper = Color(0xFF1A2333);
+  static const paper2 = Color(0xFF131A28);
+  static const paper3 = Color(0xFF0F1420);
 
-  static const ink = Color(0xFFE7EAEE);
-  static const ink2 = Color(0xFF0D0F12);
+  static const ink = Color(0xFFEDF0F5);
+  static const ink2 = Color(0xFF1E2738);
 
-  static const steel = Color(0xFF8D96A0);
-  static const steel2 = Color(0xFF565F6A);
+  static const steel = Color(0xFF8A93A6);
+  static const steel2 = Color(0xFF4B5568);
 
-  static const gold = Color(0xFF3DD6D0);
-  static const goldDeep = Color(0xFF22B0AB);
-  static const goldLight = Color(0xFF7FE9E4);
-  static const blue = Color(0xFF5B8DEF);
-  static const blueDeep = Color(0xFF3D6FD1);
+  static const gold = Color(0xFFF0562B);
+  static const goldDeep = Color(0xFFC7401D);
+  static const goldLight = Color(0xFFFF8B63);
+  static const blue = Color(0xFF4C8DFF);
+  static const blueDeep = Color(0xFF3568C9);
 
-  static const turf = Color(0xFF4ADE80);
-  static const tape = Color(0xFFFB6B6B);
-  static const warn = Color(0xFFF5B94D);
+  static const turf = Color(0xFF39D97A);
+  static const tape = Color(0xFFFF4D5E);
+  static const warn = Color(0xFFFFB020);
 }
 
 class AppTheme {
   AppTheme._();
 
-  /// Captions, stamps, numbers — tabular-nums figures throughout.
+  static const radiusSm = 8.0;
+  static const radiusMd = 12.0;
+  static const radiusLg = 20.0;
+  static const radiusXl = 28.0;
+
+  /// Font used for captions, badges, and numbers.
   static TextStyle mono({
     double fontSize = 14,
     FontWeight fontWeight = FontWeight.w500,
@@ -43,8 +45,7 @@ class AppTheme {
     double letterSpacing = 0,
   }) {
     return TextStyle(
-      fontFamily: 'monospace',
-      fontFamilyFallback: const ['Cascadia Mono', 'Consolas', 'Courier New', 'Courier'],
+      fontFamily: 'JetBrains Mono',
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -53,16 +54,15 @@ class AppTheme {
     );
   }
 
-  /// Headlines and labels — a regular system sans, no condensed treatment.
+  /// Font used for headings and big stat numbers.
   static TextStyle display({
     double fontSize = 16,
-    FontWeight fontWeight = FontWeight.w600,
+    FontWeight fontWeight = FontWeight.w700,
     Color color = AppColors.ink,
     double letterSpacing = 0.2,
   }) {
     return TextStyle(
-      fontFamily: 'Segoe UI',
-      fontFamilyFallback: const ['Roboto', 'Helvetica', 'Arial'],
+      fontFamily: 'Bricolage Grotesque',
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color,
@@ -71,8 +71,24 @@ class AppTheme {
     );
   }
 
-  /// The hairline border used by cards, inputs, and buttons — a thin
-  /// low-contrast rule rather than a heavy 2px ink stroke.
+  /// Font used for normal text, labels, and buttons.
+  static TextStyle body({
+    double fontSize = 14,
+    FontWeight fontWeight = FontWeight.w500,
+    Color color = AppColors.ink,
+    double letterSpacing = 0.2,
+  }) {
+    return TextStyle(
+      fontFamily: 'Plus Jakarta Sans',
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      letterSpacing: letterSpacing,
+      height: 1.3,
+    );
+  }
+
+  /// Thin light border used on cards, inputs, and buttons.
   static Border get inkBorder => Border.all(color: AppColors.ink2, width: 1);
 
   static ThemeData get theme {
@@ -80,7 +96,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.voidBg,
-      fontFamily: 'Segoe UI',
+      fontFamily: 'Plus Jakarta Sans',
       colorScheme: const ColorScheme.dark(
         primary: AppColors.gold,
         onPrimary: AppColors.voidBg,
@@ -99,16 +115,19 @@ class AppTheme {
         backgroundColor: AppColors.voidBg,
         foregroundColor: AppColors.ink,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
-        titleTextStyle: display(fontSize: 20, fontWeight: FontWeight.w600),
+        titleTextStyle: display(fontSize: 20, fontWeight: FontWeight.w700),
         shape: const Border(bottom: BorderSide(color: AppColors.ink2, width: 1)),
       ),
       cardTheme: CardThemeData(
         color: AppColors.paper2,
-        elevation: 0,
+        elevation: 4,
+        shadowColor: Colors.black.withValues(alpha: 0.4),
+        surfaceTintColor: Colors.transparent,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(radiusLg),
           side: const BorderSide(color: AppColors.ink2, width: 1),
         ),
       ),
@@ -120,15 +139,15 @@ class AppTheme {
         floatingLabelStyle: const TextStyle(color: AppColors.gold),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(color: AppColors.ink2, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(color: AppColors.ink2, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(color: AppColors.gold, width: 1.5),
         ),
       ),
@@ -137,8 +156,11 @@ class AppTheme {
           backgroundColor: AppColors.gold,
           foregroundColor: AppColors.voidBg,
           minimumSize: const Size.fromHeight(48),
-          textStyle: display(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.voidBg, letterSpacing: 0.4),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          elevation: 6,
+          shadowColor: AppColors.gold.withValues(alpha: 0.45),
+          surfaceTintColor: Colors.transparent,
+          textStyle: body(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.voidBg, letterSpacing: 0.4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -146,14 +168,14 @@ class AppTheme {
           foregroundColor: AppColors.blue,
           side: const BorderSide(color: AppColors.blue, width: 1),
           minimumSize: const Size.fromHeight(48),
-          textStyle: display(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.blue, letterSpacing: 0.4),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: body(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.blue, letterSpacing: 0.4),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.gold,
-          textStyle: display(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.gold, letterSpacing: 0.4),
+          textStyle: body(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.gold, letterSpacing: 0.4),
         ),
       ),
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
@@ -163,7 +185,7 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.paper3,
         contentTextStyle: const TextStyle(color: AppColors.ink),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radiusMd)),
       ),
       iconTheme: const IconThemeData(color: AppColors.steel),
       progressIndicatorTheme: const ProgressIndicatorThemeData(color: AppColors.gold),

@@ -70,7 +70,7 @@
             </thead>
             <tbody>
                 @forelse ($classes as $class)
-                    <tr>
+                    <tr class="fh-tr">
                         <td class="fh-td font-medium">{{ $class->name }}</td>
                         <td class="fh-td text-steel">{{ $class->instructor_name ?? '—' }}</td>
                         <td class="fh-td-mono">{{ $class->start_time->format('D, M j g:ia') }}</td>

@@ -66,7 +66,7 @@
             </thead>
             <tbody>
                 @forelse ($staff as $account)
-                    <tr>
+                    <tr class="fh-tr">
                         <td class="fh-td font-medium">{{ $account->name }}</td>
                         <td class="fh-td text-steel">{{ $account->email }}</td>
                         <td class="fh-td flex gap-3">

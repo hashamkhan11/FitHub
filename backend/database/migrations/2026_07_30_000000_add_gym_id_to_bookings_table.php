@@ -22,8 +22,7 @@ return new class extends Migration
             'SET bookings.gym_id = gym_classes.gym_id'
         );
 
-        // doctrine/dbal isn't installed, so a plain Blueprint::change() isn't
-        // available here - modify the column with raw SQL instead.
+        // Using raw SQL here since the normal column-change method needs a package we don't have.
         DB::statement('ALTER TABLE bookings MODIFY gym_id BIGINT UNSIGNED NOT NULL');
     }
 

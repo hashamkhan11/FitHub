@@ -67,7 +67,7 @@
             </thead>
             <tbody>
                 @forelse ($trainers as $trainer)
-                    <tr>
+                    <tr class="fh-tr">
                         <td class="fh-td font-medium">{{ $trainer->name }}</td>
                         <td class="fh-td text-steel">{{ $trainer->email }}</td>
                         <td class="fh-td-mono">{{ $trainer->members_count }}</td>

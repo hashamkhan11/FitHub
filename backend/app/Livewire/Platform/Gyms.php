@@ -69,8 +69,7 @@ class Gyms extends Component
         $gym = Gym::findOrFail($gymId);
         $name = $gym->name;
 
-        // Logged before delete() - platform_activity_logs.gym_id is a foreign
-        // key, so it can't reference a gym row that's already gone.
+        // Log this before delete() — can't log a reference to an already-deleted gym.
         PlatformActivityLog::record('gym.deleted', "Permanently deleted gym {$name} and all its data.", $gym);
 
         $gym->delete();

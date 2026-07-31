@@ -37,7 +37,7 @@
                 </thead>
                 <tbody>
                     @forelse ($payments as $payment)
-                        <tr>
+                        <tr class="fh-tr">
                             <td class="fh-td-mono">{{ $payment->paid_at->format('M j, Y') }}</td>
                             <td class="fh-td">
                                 {{ $payment->membership->member->name }}

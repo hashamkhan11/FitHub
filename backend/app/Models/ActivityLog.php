@@ -35,7 +35,7 @@ class ActivityLog extends Model
     }
 
     /**
-     * Record an action against the currently authenticated staff/owner user.
+     * Logs an action done by the currently logged-in staff/owner user.
      */
     public static function record(string $action, string $description): void
     {

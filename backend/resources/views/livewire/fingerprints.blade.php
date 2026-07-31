@@ -75,7 +75,7 @@
             </thead>
             <tbody>
                 @forelse ($members as $member)
-                    <tr>
+                    <tr class="fh-tr">
                         <td class="fh-td font-medium">{{ $member->name }}</td>
                         <td class="fh-td">
                             @if ($member->fingerprint_id)

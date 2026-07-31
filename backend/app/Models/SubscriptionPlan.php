@@ -21,6 +21,7 @@ class SubscriptionPlan extends Model
         'member_limit',
         'staff_limit',
         'features',
+        'has_hardware_access',
         'is_active',
         'sort_order',
     ];
@@ -31,6 +32,7 @@ class SubscriptionPlan extends Model
             'monthly_price' => 'decimal:2',
             'yearly_price' => 'decimal:2',
             'features' => 'array',
+            'has_hardware_access' => 'boolean',
             'is_active' => 'boolean',
         ];
     }

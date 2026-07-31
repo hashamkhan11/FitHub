@@ -10,19 +10,19 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
         <div class="fh-ticket">
             <p class="fh-eyebrow">Total Members</p>
-            <p class="fh-stat-value mt-2">{{ $totalMembers }}</p>
+            <p class="fh-stat-value mt-2" x-data="countUp({{ $totalMembers }})" x-text="display">{{ $totalMembers }}</p>
         </div>
         <div class="fh-ticket">
             <p class="fh-eyebrow">Active Members</p>
-            <p class="fh-stat-value mt-2 text-turf">{{ $activeMembersCount }}</p>
+            <p class="fh-stat-value mt-2 text-turf" x-data="countUp({{ $activeMembersCount }})" x-text="display">{{ $activeMembersCount }}</p>
         </div>
         <div class="fh-ticket">
             <p class="fh-eyebrow">Check-ins — this week</p>
-            <p class="fh-stat-value mt-2">{{ $checkInsThisWeek }}</p>
+            <p class="fh-stat-value mt-2" x-data="countUp({{ $checkInsThisWeek }})" x-text="display">{{ $checkInsThisWeek }}</p>
         </div>
         <div class="fh-ticket">
             <p class="fh-eyebrow">Revenue — this week</p>
-            <p class="fh-stat-value mt-2 text-gold">{{ number_format($revenueThisWeek, 2) }}</p>
+            <p class="fh-stat-value mt-2 text-gold" x-data="countUp({{ $revenueThisWeek }}, { decimals: 2 })" x-text="display">{{ number_format($revenueThisWeek, 2) }}</p>
         </div>
     </div>
 
@@ -60,7 +60,7 @@
             <div class="relative h-56">
                 <div wire:ignore class="h-full"><canvas x-ref="canvas"></canvas></div>
                 <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span class="fh-stat-value text-2xl">{{ $byPlan->sum('count') }}</span>
+                    <span class="fh-stat-value text-2xl" x-data="countUp({{ $byPlan->sum('count') }})" x-text="display">{{ $byPlan->sum('count') }}</span>
                     <span class="fh-eyebrow">Active</span>
                 </div>
             </div>
@@ -75,7 +75,7 @@
             <div class="relative h-56">
                 <div wire:ignore class="h-full"><canvas x-ref="canvas"></canvas></div>
                 <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span class="fh-stat-value text-2xl">{{ array_sum($membershipStatus) }}</span>
+                    <span class="fh-stat-value text-2xl" x-data="countUp({{ array_sum($membershipStatus) }})" x-text="display">{{ array_sum($membershipStatus) }}</span>
                     <span class="fh-eyebrow">Total</span>
                 </div>
             </div>
@@ -100,7 +100,7 @@
             </thead>
             <tbody>
                 @forelse ($recentMembers as $member)
-                    <tr wire:key="recent-member-{{ $member->id }}">
+                    <tr class="fh-tr" wire:key="recent-member-{{ $member->id }}">
                         <td class="fh-td font-medium max-w-[180px]">
                             <div class="flex items-center gap-2.5">
                                 @if ($member->photo_url)

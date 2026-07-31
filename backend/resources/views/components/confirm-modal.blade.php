@@ -17,7 +17,7 @@
         x-transition:leave="transition ease-in duration-75"
         x-transition:leave-start="opacity-100 scale-100"
         x-transition:leave-end="opacity-0 scale-95"
-        class="fh-card shadow-2xl w-full max-w-sm"
+        class="fh-card shadow-fh-lift rounded-xl w-full max-w-sm"
     >
         <h2 class="fh-heading text-base mb-2" x-text="$store.confirmModal.title"></h2>
         <p class="text-sm text-steel mb-4" x-text="$store.confirmModal.message"></p>

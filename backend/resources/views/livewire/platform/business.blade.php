@@ -7,7 +7,7 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="pf-card">
             <p class="pf-eyebrow mb-2">MRR</p>
-            <p class="pf-stat-value">${{ number_format($mrr, 2) }}</p>
+            <p class="pf-stat-value" x-data="countUp({{ $mrr }}, { decimals: 2, prefix: '$' })" x-text="display">${{ number_format($mrr, 2) }}</p>
             <p class="text-xs text-mist mt-1">{{ $activeCount }} paying {{ \Illuminate\Support\Str::plural('gym', $activeCount) }}</p>
         </div>
         <div class="pf-card">
@@ -16,7 +16,7 @@
                 <p class="pf-stat-value text-mist">&mdash;</p>
                 <p class="text-xs text-mist mt-1">No trials have finished yet</p>
             @else
-                <p class="pf-stat-value text-teal">{{ $conversion }}%</p>
+                <p class="pf-stat-value text-teal" x-data="countUp({{ $conversion }}, { suffix: '%' })" x-text="display">{{ $conversion }}%</p>
                 <p class="text-xs text-mist mt-1">of gyms that finished their trial</p>
             @endif
         </div>
@@ -26,13 +26,13 @@
                 <p class="pf-stat-value text-mist">&mdash;</p>
                 <p class="text-xs text-mist mt-1">No paying gyms yet</p>
             @else
-                <p class="pf-stat-value {{ $churn['rate'] > 0 ? 'text-tape' : '' }}">{{ $churn['rate'] }}%</p>
+                <p class="pf-stat-value {{ $churn['rate'] > 0 ? 'text-tape' : '' }}" x-data="countUp({{ $churn['rate'] }}, { suffix: '%' })" x-text="display">{{ $churn['rate'] }}%</p>
                 <p class="text-xs text-mist mt-1">{{ $churn['churned'] }} canceled subscription{{ $churn['churned'] === 1 ? '' : 's' }}</p>
             @endif
         </div>
         <div class="pf-card">
             <p class="pf-eyebrow mb-2">On trial now</p>
-            <p class="pf-stat-value text-[#B9862E]">{{ $trialCount }}</p>
+            <p class="pf-stat-value text-[#B9862E]" x-data="countUp({{ $trialCount }})" x-text="display">{{ $trialCount }}</p>
             <p class="text-xs text-mist mt-1">{{ $suspendedCount }} suspended</p>
         </div>
     </div>
@@ -81,7 +81,7 @@
             </thead>
             <tbody>
                 @forelse ($planMix as $row)
-                    <tr>
+                    <tr class="pf-tr">
                         <td class="pf-td font-medium">{{ $row['name'] }}</td>
                         <td class="pf-td-mono">{{ $row['count'] }}</td>
                         <td class="pf-td-mono">${{ number_format($row['mrr'], 2) }}</td>

@@ -2,9 +2,9 @@ import './bootstrap';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { Chart } from 'chart.js/auto';
 
-Chart.defaults.font.family = 'ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace';
+Chart.defaults.font.family = '"JetBrains Mono", ui-monospace, Consolas, monospace';
 Chart.defaults.font.size = 11;
-Chart.defaults.color = '#8D96A0';
+Chart.defaults.color = '#8A93A6';
 
 document.addEventListener('alpine:init', () => {
     // Global replacement for the browser's native confirm()/prompt() —
@@ -56,6 +56,49 @@ document.addEventListener('alpine:init', () => {
             this.inputValue = '';
         },
     });
+
+    // Count-up animation for KPI/stat numbers (`.fh-stat-value` / `.pf-stat-value`).
+    // Animates the element's own text content from 0 to `target` over ~900ms
+    // with an ease-out curve, formatting via `toLocaleString()` so thousands
+    // separators match what the static Blade-rendered value would show.
+    // `opts.decimals` controls fixed-decimal formatting (e.g. currency),
+    // `opts.prefix`/`opts.suffix` wrap the formatted number (e.g. '$', '%')
+    // so the animated text matches the final static text exactly.
+    Alpine.data('countUp', (target, opts = {}) => ({
+        display: '0',
+
+        format(value) {
+            const decimals = opts.decimals ?? 0;
+            const formatted = Number(value).toLocaleString(undefined, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals,
+            });
+            return (opts.prefix ?? '') + formatted + (opts.suffix ?? '');
+        },
+
+        init() {
+            const finalValue = Number(target) || 0;
+
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                this.display = this.format(finalValue);
+                return;
+            }
+
+            const duration = 900;
+            const start = performance.now();
+
+            const step = (now) => {
+                const elapsed = now - start;
+                const t = Math.min(1, elapsed / duration);
+                const eased = 1 - Math.pow(1 - t, 3);
+                this.display = this.format(finalValue * eased);
+
+                if (t < 1) requestAnimationFrame(step);
+            };
+
+            requestAnimationFrame(step);
+        },
+    }));
 
     Alpine.data('qrScanner', () => ({
         scanner: null,
@@ -131,7 +174,7 @@ document.addEventListener('alpine:init', () => {
                     return;
                 }
 
-                const yTicks = { color: '#8D96A0' };
+                const yTicks = { color: '#8A93A6' };
 
                 if (wholeNumbers) {
                     // Counts of people (check-ins) can't be fractional — force integer-only
@@ -158,7 +201,7 @@ document.addEventListener('alpine:init', () => {
                             responsive: true,
                             plugins: { legend: { display: false } },
                             scales: {
-                                y: { beginAtZero: true, ticks: yTicks, grid: { color: '#262B31', borderDash: [3, 3] }, border: { display: false } },
+                                y: { beginAtZero: true, ticks: yTicks, grid: { color: '#1E2738', borderDash: [3, 3] }, border: { display: false } },
                                 x: {
                                     grid: { display: false },
                                     border: { display: false },
@@ -236,7 +279,7 @@ document.addEventListener('alpine:init', () => {
                                 pointRadius: 0,
                                 pointHoverRadius: 4,
                                 pointBackgroundColor: color,
-                                pointBorderColor: '#171B20',
+                                pointBorderColor: '#131A28',
                                 pointBorderWidth: 1.5,
                             }],
                         },
@@ -248,7 +291,7 @@ document.addEventListener('alpine:init', () => {
                                 tooltip: { intersect: false, mode: 'index' },
                             },
                             scales: {
-                                y: { beginAtZero: true, ticks: { color: '#8D96A0', precision: 0 }, grid: { color: '#262B31', borderDash: [3, 3] }, border: { display: false } },
+                                y: { beginAtZero: true, ticks: { color: '#8A93A6', precision: 0 }, grid: { color: '#1E2738', borderDash: [3, 3] }, border: { display: false } },
                                 x: {
                                     grid: { display: false },
                                     border: { display: false },
@@ -379,7 +422,7 @@ document.addEventListener('alpine:init', () => {
                             },
                             scales: {
                                 x: { display: false, grid: { display: false }, border: { display: false } },
-                                y: { grid: { display: false }, border: { display: false }, ticks: { color: '#E7EAEE' } },
+                                y: { grid: { display: false }, border: { display: false }, ticks: { color: '#EDF0F5' } },
                             },
                         },
                         plugins: [{
@@ -389,8 +432,8 @@ document.addEventListener('alpine:init', () => {
                                 c.getDatasetMeta(0).data.forEach((bar, i) => {
                                     const value = c.data.datasets[0].data[i];
                                     ctx.save();
-                                    ctx.font = '600 11px ui-monospace, "Cascadia Mono", Consolas, monospace';
-                                    ctx.fillStyle = '#E7EAEE';
+                                    ctx.font = '600 11px "JetBrains Mono", ui-monospace, Consolas, monospace';
+                                    ctx.fillStyle = '#EDF0F5';
                                     ctx.textAlign = 'left';
                                     ctx.textBaseline = 'middle';
                                     ctx.fillText(valuePrefix + Number(value).toLocaleString(), bar.x + 8, bar.y);

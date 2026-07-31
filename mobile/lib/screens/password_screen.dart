@@ -110,7 +110,7 @@ class _ChangePasswordCardState extends ConsumerState<_ChangePasswordCard> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 8),
-              Text(_error!, style: const TextStyle(color: AppColors.tape)),
+              Text(_error!, style: AppTheme.body(color: AppColors.tape)),
             ],
             const SizedBox(height: 16),
             FilledButton(

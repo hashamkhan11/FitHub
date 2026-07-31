@@ -35,10 +35,7 @@ class StripeWebhookController extends CashierWebhookController
     }
 
     /**
-     * Cashier's base controller has no handler for this event — Stripe fires
-     * it as soon as a renewal charge fails, well before the subscription
-     * itself transitions to 'unpaid'/'canceled', so this is the earliest
-     * point we can warn an owner their card needs attention.
+     * Fires as soon as a renewal payment fails, so we can warn the owner early.
      */
     protected function handleInvoicePaymentFailed(array $payload): \Symfony\Component\HttpFoundation\Response
     {

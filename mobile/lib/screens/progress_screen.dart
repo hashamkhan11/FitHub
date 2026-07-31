@@ -81,7 +81,7 @@ class ProgressScreen extends ConsumerWidget {
                             padding: const EdgeInsets.fromLTRB(8, 16, 16, 8),
                             decoration: BoxDecoration(
                               color: AppColors.paper2,
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                               border: Border.all(color: AppColors.ink2),
                             ),
                             child: _WeightChart(entries: entries),
@@ -95,7 +95,7 @@ class ProgressScreen extends ConsumerWidget {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, _) => Center(child: Text('Could not load progress: $err', style: const TextStyle(color: AppColors.tape))),
+                  error: (err, _) => Center(child: Text('Could not load progress: $err', style: AppTheme.body(color: AppColors.tape))),
                 ),
               ),
             ),
@@ -206,7 +206,7 @@ class _BmiTeaser extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
       child: MemCard(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         child: Row(
@@ -251,7 +251,7 @@ class _MeasurementCard extends StatelessWidget {
             if (entry['arms_cm'] != null) _row('Arms', '${entry['arms_cm']} cm'),
             if (entry['notes'] != null && (entry['notes'] as String).isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(entry['notes'] as String, style: const TextStyle(color: AppColors.steel)),
+              Text(entry['notes'] as String, style: AppTheme.body(color: AppColors.steel)),
             ],
           ],
         ),
@@ -264,7 +264,7 @@ class _MeasurementCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 2),
       child: Row(
         children: [
-          SizedBox(width: 90, child: Text(label, style: const TextStyle(color: AppColors.steel, fontSize: 13))),
+          SizedBox(width: 90, child: Text(label, style: AppTheme.mono(color: AppColors.steel, fontSize: 13))),
           Text(value, style: AppTheme.mono(fontSize: 13)),
         ],
       ),
@@ -391,7 +391,7 @@ class _LogMeasurementSheetState extends State<_LogMeasurementSheet> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 8),
-              Text(_error!, style: const TextStyle(color: AppColors.tape)),
+              Text(_error!, style: AppTheme.body(color: AppColors.tape)),
             ],
             const SizedBox(height: 16),
             FilledButton(

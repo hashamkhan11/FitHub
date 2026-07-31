@@ -15,9 +15,8 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * One-off demo-data seeder for the "FitHub" gym (admin@fithub.test, gym id 2) so the
- * mobile app has realistic Pakistani gym data to demo. Not wired into DatabaseSeeder —
- * run manually with `php artisan demo:seed-fithub`, safe to re-run (guards on names).
+ * Adds demo data to the FitHub gym for demo purposes. Run with `php artisan demo:seed-fithub`.
+ * Safe to run more than once.
  */
 class SeedFitHubDemoData extends Command
 {
@@ -52,8 +51,7 @@ class SeedFitHubDemoData extends Command
         Member::where('email', 'test1@fithub.com')->update(['name' => 'Fatima Noor']);
         Member::where('email', 'mubarak@gmail.com')->update(['name' => 'Zainab Malik']);
 
-        // Give the admin's own demo member account a trainer, so the Home screen's
-        // "Trainer" badge has something real to show.
+        // Give the admin's demo member a trainer so the Home screen shows one.
         $trainer = User::where('email', 'trainer1@fithub.test')->first();
         if ($trainer) {
             Member::where('email', 'admin@fithub.test')->update(['trainer_id' => $trainer->id]);
@@ -110,8 +108,7 @@ class SeedFitHubDemoData extends Command
             $startDate = now()->subDays(60 - $i * 4);
             $endDate = $startDate->copy()->addDays($plan->duration_days);
 
-            // A couple of intentionally lapsed / partially-paid memberships so the
-            // roster doesn't read as an unrealistic 100%-paid, 100%-active gym.
+            // A few lapsed/partial-paid memberships so the data looks realistic.
             $paymentStatus = match (true) {
                 $i === 2 => 'partial',
                 $i === 5 => 'pending',
@@ -200,10 +197,8 @@ class SeedFitHubDemoData extends Command
     {
         $admin = Member::where('email', 'admin@fithub.test')->first();
 
-        // A real member is only ever booked into a handful of upcoming classes, not
-        // every single one — index 0 (soonest) and 1 book normally, index 3 (the
-        // small "Evening Yoga & Recovery" class) is deliberately filled to capacity
-        // first so the admin's own booking demonstrates the waitlist state.
+        // Book members into a few classes, not all. One class is filled up on
+        // purpose so the admin's own booking shows the waitlist.
         $adminBooksIndexes = [0, 1, 3];
 
         foreach ($classes as $index => $class) {
@@ -221,7 +216,7 @@ class SeedFitHubDemoData extends Command
                     try {
                         $class->book($member);
                     } catch (\DomainException) {
-                        // already booked elsewhere at the same slot — skip
+                        // already booked at this time — skip
                     }
                 }
             }
@@ -230,7 +225,7 @@ class SeedFitHubDemoData extends Command
                 try {
                     $class->book($admin);
                 } catch (\DomainException) {
-                    // admin already has a booking for this class
+                    // admin already booked this class
                 }
             }
         }

@@ -32,9 +32,8 @@ bool fingerprintReady = false;
 bool waitingForFingerRemoval = false;
 
 // ---------- dashboard-driven enrollment state machine ----------
-// Enrollment needs two separate finger placements, but loop() must keep
-// polling/acking other commands meanwhile - so this advances one step per
-// loop() iteration instead of blocking, unlike the old Serial enrollFingerprint().
+// Enrollment needs two finger placements, done one step per loop() so the
+// device can keep polling/replying to other commands at the same time.
 enum EnrollState { ENROLL_NONE, ENROLL_WAIT_FIRST, ENROLL_WAIT_REMOVE, ENROLL_WAIT_SECOND };
 EnrollState enrollState = ENROLL_NONE;
 uint8_t enrollId = 0;
@@ -75,9 +74,7 @@ void clearConfig() {
     prefs.end();
 }
 
-// Updates just the server URL / token (e.g. after moving networks) without
-// going through the full captive-portal setup flow - handy for debugging
-// over Serial when the device already has working WiFi credentials.
+// Updates just the server URL/token without redoing the whole WiFi setup.
 void updateServerConfig(const String &server, const String &token) {
     prefs.begin("lock", false);
     prefs.putBool("configured", true);
@@ -182,9 +179,8 @@ void closeLock() {
     Serial.println("Lock CLOSED");
 }
 
-// Opens the lock and schedules an automatic close after UNLOCK_PULSE_MS.
-// Unlike the mobile-app-triggered open/close (which holds until an explicit
-// close command), a fingerprint entry point must not stay unlocked forever.
+// Opens the lock and auto-closes it after UNLOCK_PULSE_MS (unlike the app's
+// open/close, which stays open until told to close).
 void pulseUnlock() {
     openLock();
     unlockUntilMs = millis() + UNLOCK_PULSE_MS;
@@ -330,8 +326,7 @@ void setupFingerprint() {
     }
 }
 
-// Reports a matched fingerprint ID to the server. Matching itself already
-// happened on-sensor, so only this small integer ever leaves the device.
+// Sends the matched fingerprint ID to the server (matching happens on the sensor itself).
 void reportFingerprintScan(int id) {
     HTTPClient http;
     WiFiClientSecure secureClient;
@@ -369,15 +364,13 @@ void reportFingerprintScan(int id) {
     http.end();
 }
 
-// Called every loop() iteration. getImage() returns immediately (no finger
-// placed yet) so this is cheap to poll continuously alongside pollServer().
+// Called every loop(). Cheap to run continuously alongside pollServer().
 void pollFingerprint() {
     if (!fingerprintReady) {
         return;
     }
 
-    // See the matching comment in updateEnroll() - getImage() needs a beat
-    // between polls to let the sensor's own capture cycle catch up.
+    // Small delay so the sensor has time to actually capture between polls.
     delay(50);
 
     if (waitingForFingerRemoval) {
@@ -407,11 +400,8 @@ void pollFingerprint() {
     waitingForFingerRemoval = true;
 }
 
-// Advances the dashboard-triggered enrollment by one step per loop()
-// iteration (mirrors the blocking Serial enrollFingerprint() sequence below,
-// but never blocks so pollServer()/pollFingerprint() keep running). Any scan
-// failure aborts the command rather than retrying silently, same as the
-// blocking version's behaviour on error.
+// Runs dashboard fingerprint enrollment one step per loop(), without blocking.
+// Any scan failure just fails the command instead of retrying.
 void updateEnroll() {
     if (enrollState == ENROLL_NONE) {
         return;
@@ -425,11 +415,7 @@ void updateEnroll() {
         return;
     }
 
-    // Without this, loop() hammers getImage() as fast as the UART allows,
-    // far faster than the sensor's own optical capture cycle, so it just
-    // keeps echoing a stale "no finger" status back. 50ms matches the
-    // polling rate used by both Adafruit's own examples and the reference
-    // firmware confirmed working on this exact sensor.
+    // Small delay so the sensor keeps up instead of returning stale "no finger" reads.
     delay(50);
 
     switch (enrollState) {
@@ -498,9 +484,8 @@ void updateEnroll() {
     }
 }
 
-// Blocking two-scan enrollment (standard Adafruit sequence), triggered by
-// typing "enroll <id>" in the Serial Monitor. Blocking is fine here - this
-// is a manual maintenance step done over USB, not part of normal operation.
+// Two-scan enrollment triggered by typing "enroll <id>" over USB Serial.
+// OK to block here since it's a manual step, not normal operation.
 void enrollFingerprint(uint8_t id) {
     Serial.printf("Place finger to enroll as ID #%d...\n", id);
     int p = -1;
@@ -555,8 +540,7 @@ void deleteFingerprint(uint8_t id) {
     }
 }
 
-// Typed Serial Monitor commands for enrollment: "enroll <id>", "delete <id>".
-// Kept local to the device on purpose - no network enrollment protocol.
+// Serial commands for enrollment: "enroll <id>", "delete <id>". USB only, no network version.
 void handleSerialCommands() {
     if (!Serial.available()) {
         return;

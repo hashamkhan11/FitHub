@@ -71,7 +71,7 @@
             </thead>
             <tbody>
                 @forelse ($admins as $admin)
-                    <tr class="hover:bg-ink/5 transition" wire:key="admin-{{ $admin->id }}">
+                    <tr class="pf-tr" wire:key="admin-{{ $admin->id }}">
                         <td class="pf-td font-medium">
                             {{ $admin->name }}
                             @if ($admin->id === auth('platform')->id())

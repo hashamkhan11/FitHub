@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'gym.active' => \App\Http\Middleware\EnsureGymIsActive::class,
+            'gym.hardware' => \App\Http\Middleware\EnsureGymHasHardware::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

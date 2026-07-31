@@ -388,16 +388,10 @@ class Members extends Component
 
         try {
             DB::transaction(function () use ($member, $plan, $newStart, &$conflicting) {
-                // Lock the conflict check and the delete+create together so a second,
-                // near-simultaneous renewal submission can't read the same "no conflict"
-                // snapshot before this one commits (previously this read happened before
-                // any transaction/lock existed).
-                //
-                // Any existing membership whose coverage still reaches into (or past) the
-                // new start date would overlap it. If nothing was ever paid against it,
-                // it's almost certainly a stray/duplicate renewal attempt — safe to retire
-                // automatically. If it's already paid, this is a real financial record:
-                // refuse instead of silently deleting or double-booking.
+                // Lock this check so two renewal submissions at once can't both
+                // pass the conflict check. An unpaid overlapping membership is
+                // likely a duplicate and gets auto-removed; a paid one is a real
+                // record, so we refuse instead of deleting it.
                 $conflicting = $member->memberships()->where('end_date', '>=', $newStart)->lockForUpdate()->get();
 
                 foreach ($conflicting as $existing) {
@@ -427,9 +421,7 @@ class Members extends Component
         $message = "Renewed membership for {$member->name} on the {$plan->name} plan.";
 
         if ($conflicting->isNotEmpty()) {
-            // Make the auto-removal visible in the audit trail instead of it being silent
-            // — the conflicting rows are soft-deleted (recoverable), not destroyed, but
-            // staff should still be able to see one was retired by this renewal.
+            // Log the auto-removal so staff can see it happened (row is soft-deleted, not gone).
             $removed = $conflicting->map(fn ($c) => $c->start_date->format('M j').' – '.$c->end_date->format('M j, Y'))->implode(', ');
             $message = "Renewed membership for {$member->name} on the {$plan->name} plan (auto-removed unpaid conflicting membership: {$removed}).";
         }

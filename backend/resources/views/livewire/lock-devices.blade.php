@@ -5,7 +5,7 @@
             <p class="text-sm text-steel mb-4">
                 This is shown only once. Paste it into the device's WiFi setup screen. If you lose it, come back here and rotate the token to get a new one.
             </p>
-            <div class="fh-input font-mono text-sm select-all break-all bg-black/20">{{ $revealedToken }}</div>
+            <div class="fh-input font-mono text-sm select-all break-all bg-void/40">{{ $revealedToken }}</div>
             <button wire:click="dismissToken" class="fh-btn-secondary mt-4">Done, I've saved it</button>
         </div>
     @endif
@@ -39,7 +39,7 @@
             </thead>
             <tbody>
                 @forelse ($devices as $device)
-                    <tr>
+                    <tr class="fh-tr">
                         <td class="fh-td font-medium">{{ $device->name }}</td>
                         <td class="fh-td">
                             @if ($device->is_online)

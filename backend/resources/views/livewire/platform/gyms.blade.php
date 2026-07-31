@@ -36,7 +36,7 @@
             </thead>
             <tbody>
                 @forelse ($gyms as $gym)
-                    <tr class="hover:bg-ink/5 transition" wire:key="gym-{{ $gym->id }}">
+                    <tr class="pf-tr" wire:key="gym-{{ $gym->id }}">
                         <td class="pf-td">
                             <a href="/ranksol/gyms/{{ $gym->id }}" class="text-ink font-medium hover:underline">{{ $gym->name }}</a>
                             <p class="text-xs text-mist">{{ $gym->email }}</p>

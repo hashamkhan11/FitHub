@@ -6,9 +6,7 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     /**
-     * Grandfather in every user that existed before self-serve signup
-     * introduced email verification, so nobody gets nagged for an
-     * account they didn't just create themselves.
+     * Marks old users as already verified, so they don't get nagged to verify.
      */
     public function up(): void
     {
@@ -17,7 +15,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Intentionally irreversible — we don't know which rows were
-        // genuinely verified vs. backfilled by this migration.
+        // Can't undo this — no way to tell which rows were really verified.
     }
 };

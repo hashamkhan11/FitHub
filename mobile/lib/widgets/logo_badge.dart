@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// Shows the real logo once `assets/images/branding/logo.png` is dropped in;
-/// falls back to the cyan "FH" monogram until then.
+/// Shows the real logo if it's added, else shows "FH" text as fallback.
 class LogoBadge extends StatelessWidget {
   const LogoBadge({super.key, this.size = 56, this.fontSize = 20, this.circular = false});
 
   final double size;
   final double fontSize;
 
-  /// Clips the mark to a circle with a gold hairline ring, matching the
-  /// [Avatar] treatment — used where the badge sits next to a circular
-  /// member photo (e.g. the Home header) instead of standing alone.
+  /// Makes the logo round with a gold ring, to match the Avatar style.
   final bool circular;
 
   @override

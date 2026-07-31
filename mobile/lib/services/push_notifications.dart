@@ -17,8 +17,7 @@ const _channel = AndroidNotificationChannel(
 
 final _localNotifications = FlutterLocalNotificationsPlugin();
 
-/// Doesn't touch Firebase, so it can run concurrently with
-/// `Firebase.initializeApp()` in `main()` instead of waiting behind it.
+/// Doesn't need Firebase, so it can run at the same time as Firebase setup.
 Future<void> initLocalNotifications() async {
   await _localNotifications.initialize(
     const InitializationSettings(
@@ -32,8 +31,7 @@ Future<void> initLocalNotifications() async {
       ?.createNotificationChannel(_channel);
 }
 
-/// Requires Firebase to already be initialized — call after
-/// `Firebase.initializeApp()` resolves.
+/// Needs Firebase already started — call this after Firebase setup finishes.
 void listenForForegroundMessages() {
   FirebaseMessaging.onMessage.listen(_showForegroundNotification);
 }
@@ -76,9 +74,7 @@ void _routeToNotificationTab(RemoteMessage message, ProviderContainer container)
   }
 }
 
-/// Skips the `updateFcmToken` network call when the token hasn't changed
-/// since the last time it was successfully registered, so a normal app open
-/// doesn't cost a request that has nothing new to report.
+/// Skips sending the token again if it hasn't changed since last time.
 Future<void> registerPushToken(ApiClient client) async {
   final messaging = FirebaseMessaging.instance;
 

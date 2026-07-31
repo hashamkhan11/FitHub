@@ -62,9 +62,7 @@ class Membership extends Model
 
         $started = $this->start_date !== null && ! $this->start_date->isFuture();
 
-        // end_date is cast to midnight, so a plain isFuture() would expire a member at
-        // 00:00 on the very day they're still paid through. Compare against the end of
-        // that day instead so coverage lasts the whole calendar day it's paid for.
+        // Compare against the end of end_date's day, so coverage lasts the whole day.
         return $started && ($this->end_date?->copy()->endOfDay()->isFuture() ?? false);
     }
 
@@ -86,8 +84,7 @@ class Membership extends Model
     }
 
     /**
-     * Resume a paused membership, pushing end_date out by however long it was frozen.
-     * Rounded up so a member is never shorted for a partial day frozen.
+     * Resumes a paused membership, extending end_date by however long it was paused.
      */
     public function resume(): void
     {
@@ -105,8 +102,7 @@ class Membership extends Model
     }
 
     /**
-     * True when the membership isn't fully paid and its term has already ended.
-     * A paused membership is never overdue — the gym itself froze the clock.
+     * True if not fully paid and the term has ended. Paused memberships are never overdue.
      */
     public function isOverdue(): bool
     {
@@ -124,7 +120,7 @@ class Membership extends Model
     }
 
     /**
-     * Recompute payment_status from the payments actually recorded so far.
+     * Updates payment_status based on payments recorded so far.
      */
     public function syncPaymentStatus(): void
     {

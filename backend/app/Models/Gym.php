@@ -131,6 +131,11 @@ class Gym extends Model
         return $this->isOnTrial() && $this->trial_ends_at && $this->trial_ends_at->isPast();
     }
 
+    public function hasHardwareAccess(): bool
+    {
+        return (bool) $this->subscriptionPlan?->has_hardware_access;
+    }
+
     public function canAddMember(): bool
     {
         $limit = $this->subscriptionPlan?->member_limit;

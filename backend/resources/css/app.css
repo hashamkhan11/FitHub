@@ -2,6 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/* "Redline" identity — self-hosted variable webfonts (no CDN). Each file
+   covers its full weight range, so a single @font-face per family with a
+   `font-weight` range is enough for every weight utility used in the app. */
+@font-face {
+    font-family: 'Bricolage Grotesque';
+    src: url('/fonts/BricolageGrotesque-Variable.woff2') format('woff2-variations');
+    font-weight: 200 800;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('/fonts/PlusJakartaSans-Variable.woff2') format('woff2-variations');
+    font-weight: 200 800;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: url('/fonts/JetBrainsMono-Variable.woff2') format('woff2-variations');
+    font-weight: 200 800;
+    font-style: normal;
+    font-display: swap;
+}
+
 @layer base {
     body {
         @apply bg-void text-ink font-sans;
@@ -22,10 +47,10 @@
         @apply font-mono uppercase tracking-[0.12em] text-xs text-steel;
     }
     .fh-card {
-        @apply bg-chalk border border-chalk-3 rounded-lg p-6;
+        @apply bg-chalk border border-chalk-3 rounded-lg shadow-fh-card p-6 transition hover:shadow-fh-lift hover:-translate-y-0.5;
     }
     .fh-card-flush {
-        @apply bg-chalk border border-chalk-3 rounded-lg;
+        @apply bg-chalk border border-chalk-3 rounded-lg shadow-fh-card;
     }
     .fh-heading {
         @apply font-display font-semibold tracking-tight text-ink;
@@ -40,7 +65,7 @@
         @apply text-tape text-sm mt-1;
     }
     .fh-btn-primary {
-        @apply inline-flex items-center justify-center gap-2 bg-gold text-void font-mono font-semibold uppercase tracking-wide text-sm px-4 py-2 rounded hover:brightness-110 active:brightness-95 transition disabled:opacity-50 disabled:pointer-events-none;
+        @apply inline-flex items-center justify-center gap-2 bg-gold text-void font-mono font-semibold uppercase tracking-wide text-sm px-4 py-2 rounded shadow-fh-glow hover:brightness-110 active:brightness-95 transition disabled:opacity-50 disabled:pointer-events-none;
     }
     .fh-btn-secondary {
         @apply inline-flex items-center justify-center gap-2 bg-transparent border border-chalk-3 text-ink font-mono font-semibold uppercase tracking-wide text-sm px-4 py-2 rounded hover:bg-chalk-2 hover:border-steel-2 transition disabled:opacity-50 disabled:pointer-events-none;
@@ -62,6 +87,9 @@
     }
     .fh-td-mono {
         @apply fh-td font-mono whitespace-nowrap tabular-nums;
+    }
+    .fh-tr {
+        @apply transition even:bg-chalk-2/40 hover:bg-chalk-2;
     }
     .fh-pill {
         @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold uppercase tracking-wide;
@@ -97,11 +125,27 @@
         @apply w-6 h-6 inline-flex items-center justify-center rounded border border-chalk-3 text-ink text-sm leading-none hover:bg-chalk-2 hover:border-steel-2 transition disabled:opacity-30 disabled:pointer-events-none;
     }
 
-    /* Headline KPI stat card — Pulse variant: flat dark card, glowing accent
-       rule along the top edge to mark it as a top-level number (replaces the
-       Locker Room Zine "torn ticket" clip-path treatment). */
+    /* Shared sidebar/nav chrome — used by both the desktop floating-glass
+       sidebar (fh-nav-link) and the mobile horizontal pill scroller
+       (fh-nav-pill), across both the fh-* gym app and the pf-* platform panel. */
+    .fh-nav-link {
+        @apply flex items-center gap-3 px-3 py-2 rounded font-mono text-sm tracking-wide border border-transparent text-steel-2 transition hover:text-ink hover:bg-chalk;
+    }
+    .fh-nav-link-active {
+        @apply text-gold bg-gold-soft border-gold/25;
+    }
+    .fh-nav-pill {
+        @apply shrink-0 px-3 py-1.5 rounded font-mono text-xs tracking-wide text-steel-2 transition hover:text-ink;
+    }
+    .fh-nav-pill-active {
+        @apply text-gold bg-gold-soft;
+    }
+
+    /* Headline KPI stat card — Redline variant: layered-shadow dark card,
+       glowing ember accent rule along the top edge to mark it as a
+       top-level number. */
     .fh-ticket {
-        @apply relative bg-chalk border border-chalk-3 rounded-lg px-5 pt-5 pb-5 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gold before:content-[''];
+        @apply relative bg-chalk border border-chalk-3 rounded-lg shadow-fh-card px-5 pt-5 pb-5 overflow-hidden before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gold before:content-[''];
     }
 
     /* Attendance check-in kiosk — viewfinder frame + restyled html5-qrcode
@@ -147,14 +191,14 @@
         @apply !bg-ink-2 !text-ink !border-steel/40;
     }
 
-    /* RankSol platform panel — now shares the fh-* Pulse surface language
-       (same dark base, same accent); pf-* stays a separate class set only so
-       the two apps' markup can still diverge structurally where needed. */
+    /* RankSol platform panel — shares the fh-* Redline surface language
+       (same dark base, same ember accent); pf-* stays a separate class set
+       only so the two apps' markup can still diverge structurally where needed. */
     .pf-eyebrow {
         @apply font-mono uppercase tracking-[0.12em] text-xs text-mist;
     }
     .pf-card {
-        @apply bg-chalk border border-chalk-3 rounded-lg p-6;
+        @apply bg-chalk border border-chalk-3 rounded-lg shadow-fh-card p-6 transition hover:shadow-fh-lift hover:-translate-y-0.5;
     }
     .pf-heading {
         @apply font-display font-semibold tracking-tight text-ink;
@@ -175,7 +219,7 @@
         @apply text-tape text-sm mt-1;
     }
     .pf-btn-primary {
-        @apply inline-flex items-center justify-center gap-2 bg-teal text-void font-mono font-semibold uppercase tracking-wide text-sm px-4 py-2 rounded hover:brightness-110 active:brightness-95 transition disabled:opacity-50;
+        @apply inline-flex items-center justify-center gap-2 bg-teal text-void font-mono font-semibold uppercase tracking-wide text-sm px-4 py-2 rounded shadow-fh-glow hover:brightness-110 active:brightness-95 transition disabled:opacity-50;
     }
     .pf-btn-secondary {
         @apply inline-flex items-center justify-center gap-2 border border-chalk-3 text-ink font-mono font-semibold uppercase tracking-wide text-sm px-4 py-2 rounded hover:bg-chalk-2 hover:border-steel-2 transition;
@@ -191,6 +235,9 @@
     }
     .pf-td-mono {
         @apply pf-td font-mono whitespace-nowrap tabular-nums;
+    }
+    .pf-tr {
+        @apply transition even:bg-chalk-2/40 hover:bg-chalk-2;
     }
     .pf-pill {
         @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold before:content-[''] before:w-1.5 before:h-1.5 before:rounded-full;

@@ -15,9 +15,7 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Insight extends Component
 {
-    // Each of these three charts pages through months independently, so a
-    // user browsing last month's revenue doesn't lose their place on the
-    // check-ins chart. All default to the current calendar month.
+    // Each chart moves through months on its own, starting at the current month.
     public string $checkInsMonth;
     public string $peakHoursMonth;
     public string $revenueMonth;
@@ -68,12 +66,8 @@ class Insight extends Component
         $this->dispatchRevenue();
     }
 
-    // These three charts never get torn down and rebuilt on month navigation
-    // (that was the source of both the cross-chart disappearing bug and the
-    // missing animation — see resources/js/app.js). Instead each chart is
-    // built once and kept alive; the browser event below pushes fresh data
-    // into the existing Chart.js instance, which animates the transition
-    // itself via chart.update().
+    // Charts are built once and kept alive, not rebuilt each time you change
+    // months — new data is just pushed into the existing chart (see app.js).
     private function dispatchCheckIns(): void
     {
         $gymId = auth()->user()->gym_id;
@@ -111,9 +105,7 @@ class Insight extends Component
         );
     }
 
-    // Categorical palette cycling through the fh-* brand hues, one hue per
-    // plan, so the revenue-by-plan chart reads as distinct series rather
-    // than a single flat bar color repeated for every plan.
+    // One brand color per plan, so the revenue-by-plan chart bars look distinct.
     private function planColors($byPlan): array
     {
         $palette = ['#2F5D50', '#FF2F66', '#B23A2E', '#155EA3', '#C2004A', '#9C9080'];
@@ -121,8 +113,7 @@ class Insight extends Component
         return $byPlan->values()->map(fn ($plan, $i) => $palette[$i % count($palette)])->all();
     }
 
-    // Stepping "next" can't go past the current calendar month — there's no
-    // future data to show yet.
+    // Can't step forward past the current month — no future data yet.
     private function clampToCurrentMonth(string $ym): string
     {
         $next = Carbon::createFromFormat('Y-m', $ym)->addMonth()->format('Y-m');
@@ -273,8 +264,7 @@ class Insight extends Component
             ? round(($class->booked_count / $class->capacity) * 100)
             : 0);
 
-        // Fill rate is windowed to the last 30 days (rather than all-time, like the
-        // "most popular" leaderboard above) so it's comparable period-over-period.
+        // Fill rate only looks at the last 30 days, so it's comparable over time.
         $currentFillRate = $this->averageFillRateForWindow($gymId, 30, 0);
         $previousFillRate = $this->averageFillRateForWindow($gymId, 60, 30);
 
@@ -325,8 +315,7 @@ class Insight extends Component
     }
 
     /**
-     * A booked member counts as attended if they checked into the gym on the
-     * class's date — there's no per-class scan, only the front-desk QR check-in.
+     * A booked member counts as attended if they checked in that day (no per-class scan).
      */
     private function noShowRateForWindow(int $gymId, int $startDaysAgo, int $endDaysAgo): array
     {

@@ -23,12 +23,8 @@ class SessionExpiredException implements Exception {
 }
 
 class ApiClient {
-  // Real Android phones can't reach 127.0.0.1 (that's the phone itself), so
-  // when testing on a physical device this must be the host PC's LAN IP.
-  // Override per-build with `--dart-define=API_HOST=...` (and update
-  // network_security_config.xml to whitelist the same host) instead of
-  // editing this default, so a staging/production build can point at a real
-  // HTTPS host without touching source.
+  // Real phones can't use 127.0.0.1, so use your PC's LAN IP for testing.
+  // Change it with --dart-define=API_HOST=... for real builds.
   static const String _lanIp = String.fromEnvironment('API_HOST', defaultValue: '192.168.137.1');
   static const String _scheme = String.fromEnvironment('API_SCHEME', defaultValue: 'https');
   static const int _port = int.fromEnvironment('API_PORT', defaultValue: 8080);
@@ -42,8 +38,7 @@ class ApiClient {
     return '$_scheme://127.0.0.1:$_port/api';
   }
 
-  /// Same host as [baseUrl] but without the `/api` suffix, for linking out to
-  /// server-rendered pages (e.g. the legal pages) rather than calling the API.
+  /// Same host as [baseUrl] but without `/api`, used for links to web pages.
   static String get webBaseUrl => baseUrl.replaceFirst(RegExp(r'/api$'), '');
 
   final String? token;
@@ -57,11 +52,7 @@ class ApiClient {
         if (token != null) 'Authorization': 'Bearer $token',
       };
 
-  /// Runs an HTTP call, translating connectivity failures into
-  /// [OfflineException] and an expired/invalid token into
-  /// [SessionExpiredException] (also firing [onSessionExpired] so the app can
-  /// drop back to the login screen), instead of letting each call site
-  /// reinvent that distinction.
+  /// Runs an HTTP call and turns network/login errors into clear exceptions.
   Future<http.Response> _send(Future<http.Response> Function() request) async {
     late final http.Response response;
     try {
@@ -244,9 +235,7 @@ class ApiClient {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  /// Partial update — only the fields actually passed are sent, so e.g. the
-  /// Profile screen can save name/phone without touching height, and the BMI
-  /// screen can save height without touching name/phone.
+  /// Only sends the fields you pass in, so other fields stay unchanged.
   Future<Map<String, dynamic>> updateProfile({String? name, String? phone, double? heightCm, bool clearHeight = false}) async {
     final response = await _send(() => _client.put(
           Uri.parse('$baseUrl/member/profile'),
@@ -365,8 +354,7 @@ class ApiClient {
     try {
       await _client.post(Uri.parse('$baseUrl/logout'), headers: _headers);
     } catch (_) {
-      // Best-effort — a session that's already expired or a device that's
-      // offline shouldn't block clearing local state in AuthNotifier.logout().
+      // Just try once — don't block logout if the server call fails.
     }
   }
 

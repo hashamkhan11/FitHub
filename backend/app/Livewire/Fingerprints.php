@@ -51,10 +51,8 @@ class Fingerprints extends Component
     }
 
     /**
-     * A command the device never picked up (still pending past its expiry) or
-     * one it started but never finished (in_progress and stale) would
-     * otherwise leave the dashboard showing "waiting..." forever - fail it so
-     * the UI can tell the owner to try again.
+     * Marks stuck/expired commands as failed, so the dashboard doesn't show
+     * "waiting..." forever and the owner can just try again.
      */
     private function expireStaleCommands(int $gymId): void
     {
@@ -138,8 +136,7 @@ class Fingerprints extends Component
             ? LockDevice::where('gym_id', $gymId)->find($member->fingerprint_device_id)
             : null;
 
-        // The device that stored this template is gone (deleted/re-registered) -
-        // there's nothing left to tell it to delete, so just clear the record.
+        // Device is gone, so just clear the record instead of trying to notify it.
         if (! $device) {
             $member->update(['fingerprint_id' => null, 'fingerprint_device_id' => null]);
             ActivityLog::record('fingerprint.removed', "Cleared fingerprint record for {$member->name} (device no longer registered).");

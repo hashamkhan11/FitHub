@@ -2,15 +2,15 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div class="fh-ticket">
             <p class="fh-eyebrow">Today — check-ins</p>
-            <p class="fh-stat-value mt-2">{{ $today['checkIns'] }}</p>
+            <p class="fh-stat-value mt-2" x-data="countUp({{ $today['checkIns'] }})" x-text="display">{{ $today['checkIns'] }}</p>
         </div>
         <div class="fh-ticket">
             <p class="fh-eyebrow">Today — revenue collected</p>
-            <p class="fh-stat-value mt-2 text-blue">{{ number_format($today['revenue'], 2) }}</p>
+            <p class="fh-stat-value mt-2 text-blue" x-data="countUp({{ $today['revenue'] }}, { decimals: 2 })" x-text="display">{{ number_format($today['revenue'], 2) }}</p>
         </div>
         <div class="fh-ticket">
             <p class="fh-eyebrow">Classes remaining today</p>
-            <p class="fh-stat-value mt-2">{{ $today['classesRemaining'] }}</p>
+            <p class="fh-stat-value mt-2" x-data="countUp({{ $today['classesRemaining'] }})" x-text="display">{{ $today['classesRemaining'] }}</p>
         </div>
     </div>
 
@@ -60,11 +60,11 @@
         <div class="fh-card">
             <p class="fh-eyebrow">Members</p>
             <div class="flex items-baseline gap-2 mt-2">
-                <span class="fh-stat-value text-turf">{{ $membershipCounts['active'] }}</span>
+                <span class="fh-stat-value text-turf" x-data="countUp({{ $membershipCounts['active'] }})" x-text="display">{{ $membershipCounts['active'] }}</span>
                 <span class="text-sm text-steel">active</span>
             </div>
             <div class="flex items-baseline gap-2 mt-1">
-                <span class="fh-stat-value text-tape text-xl">{{ $membershipCounts['expired'] }}</span>
+                <span class="fh-stat-value text-tape text-xl" x-data="countUp({{ $membershipCounts['expired'] }})" x-text="display">{{ $membershipCounts['expired'] }}</span>
                 <span class="text-sm text-steel">expired</span>
             </div>
         </div>
@@ -75,7 +75,7 @@
                 <p class="text-sm text-steel mt-3">No expirations in this window.</p>
             @else
                 <div class="flex items-baseline gap-2 mt-2">
-                    <span class="fh-stat-value">{{ $renewalRate['rate'] }}%</span>
+                    <span class="fh-stat-value" x-data="countUp({{ $renewalRate['rate'] }}, { suffix: '%' })" x-text="display">{{ $renewalRate['rate'] }}%</span>
                     @if ($renewalRate['delta'] !== null && $renewalRate['delta'] != 0)
                         <span class="{{ $renewalRate['delta'] > 0 ? 'fh-stat-delta-up' : 'fh-stat-delta-down' }}">
                             {{ $renewalRate['delta'] > 0 ? '▲' : '▼' }} {{ abs($renewalRate['delta']) }}pt
@@ -92,7 +92,7 @@
                 <p class="text-sm text-steel mt-3">No classes yet.</p>
             @else
                 <div class="flex items-baseline gap-2 mt-2">
-                    <span class="fh-stat-value">{{ $classStats['averageFillRate'] }}%</span>
+                    <span class="fh-stat-value" x-data="countUp({{ $classStats['averageFillRate'] }}, { suffix: '%' })" x-text="display">{{ $classStats['averageFillRate'] }}%</span>
                     @if ($classStats['fillRateDelta'] !== null && $classStats['fillRateDelta'] != 0)
                         <span class="{{ $classStats['fillRateDelta'] > 0 ? 'fh-stat-delta-up' : 'fh-stat-delta-down' }}">
                             {{ $classStats['fillRateDelta'] > 0 ? '▲' : '▼' }} {{ abs($classStats['fillRateDelta']) }}pt
@@ -109,7 +109,7 @@
                 <p class="text-sm text-steel mt-3">No past classes in this window.</p>
             @else
                 <div class="flex items-baseline gap-2 mt-2">
-                    <span class="fh-stat-value">{{ $noShowRate['rate'] }}%</span>
+                    <span class="fh-stat-value" x-data="countUp({{ $noShowRate['rate'] }}, { suffix: '%' })" x-text="display">{{ $noShowRate['rate'] }}%</span>
                     @if ($noShowRate['delta'] !== null && $noShowRate['delta'] != 0)
                         <span class="{{ $noShowRate['delta'] < 0 ? 'fh-stat-delta-up' : 'fh-stat-delta-down' }}">
                             {{ $noShowRate['delta'] < 0 ? '▼' : '▲' }} {{ abs($noShowRate['delta']) }}pt
@@ -135,7 +135,7 @@
             </thead>
             <tbody>
                 @forelse ($classStats['mostPopular'] as $class)
-                    <tr>
+                    <tr class="fh-tr">
                         <td class="fh-td font-medium">{{ $class->name }}</td>
                         <td class="fh-td-mono">{{ \Illuminate\Support\Carbon::parse($class->start_time)->format('M j, g:i A') }}</td>
                         <td class="fh-td-mono">{{ $class->booked_count }}</td>
@@ -192,7 +192,7 @@
                 </thead>
                 <tbody>
                     @forelse ($outstandingBalances as $membership)
-                        <tr>
+                        <tr class="fh-tr">
                             <td class="fh-td font-medium">{{ $membership->member->name }}</td>
                             <td class="fh-td">{{ $membership->plan->name }}</td>
                             <td class="fh-td-mono">{{ number_format($membership->balance_due, 2) }}</td>

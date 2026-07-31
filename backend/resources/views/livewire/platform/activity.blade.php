@@ -17,7 +17,7 @@
             </thead>
             <tbody>
                 @forelse ($logs as $log)
-                    <tr>
+                    <tr class="pf-tr">
                         <td class="pf-td-mono">{{ $log->created_at->format('M j, Y g:ia') }}</td>
                         <td class="pf-td">{{ $log->platformAdmin?->name ?? 'System' }}</td>
                         <td class="pf-td">

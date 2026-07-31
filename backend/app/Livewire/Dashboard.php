@@ -51,7 +51,7 @@ class Dashboard extends Component
         return now()->startOfWeek(Carbon::MONDAY)->toDateString();
     }
 
-    // Stepping "next" can't go past the current week — there's no future data to show yet.
+    // Can't step forward past the current week — no future data yet.
     private function clampToCurrentWeek(string $weekStart): string
     {
         $next = Carbon::parse($weekStart)->addWeek()->toDateString();
@@ -117,9 +117,7 @@ class Dashboard extends Component
         })->all();
     }
 
-    // Only members whose latest membership is currently active count toward a
-    // plan's headcount here — this is a "who's on this plan right now" breakdown,
-    // not a revenue total (that's Insight::revenueByPlan()).
+    // Counts only members currently active on each plan, not revenue totals.
     private function membersByPlan(): \Illuminate\Support\Collection
     {
         return Member::query()
@@ -136,8 +134,7 @@ class Dashboard extends Component
             ->values();
     }
 
-    // Same palette/cycling convention as Insight::planColors(), kept in sync so
-    // a given plan reads as the same color across both pages.
+    // Same colors as Insight::planColors(), so a plan looks the same on both pages.
     private function planColors($byPlan): array
     {
         $palette = ['#2F5D50', '#FF2F66', '#B23A2E', '#155EA3', '#C2004A', '#9C9080'];
@@ -146,9 +143,8 @@ class Dashboard extends Component
     }
 
     /**
-     * Active/Expired/Pending — a membership *lifecycle* status, distinct from
-     * Membership::$payment_status (a billing status: pending/partial/paid).
-     * "Pending" means a real membership exists but its start_date hasn't arrived yet.
+     * Active/Expired/Pending status — different from payment_status (billing).
+     * "Pending" means the membership hasn't started yet.
      */
     private function classifyMembershipStatus(?Membership $membership): string
     {

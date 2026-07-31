@@ -15,9 +15,7 @@ final membershipProvider = FutureProvider.autoDispose((ref) async {
   return client.fetchMembership();
 });
 
-// Derived from the same classesProvider/attendanceProvider the Classes and
-// Attendance tabs use, rather than fetching /classes and /member/attendance
-// again — those tabs share this data instead of double-hitting the API.
+// Reuses the same data as the Classes/Attendance tabs instead of fetching again.
 final nextClassProvider = FutureProvider.autoDispose((ref) async {
   final classes = await ref.watch(classesProvider.future);
 
@@ -35,9 +33,7 @@ final attendanceStreakProvider = FutureProvider.autoDispose((ref) async {
   return _computeStreak(await ref.watch(attendanceProvider.future));
 });
 
-/// Consecutive calendar days (ending today or yesterday) with at least one
-/// check-in. Anchoring on yesterday too means the streak doesn't drop to
-/// zero first thing in the morning before today's check-in happens.
+/// Counts days in a row with a check-in, ending today or yesterday.
 int _computeStreak(List<dynamic> attendance) {
   final days = attendance
       .map((a) => DateTime.parse((a as Map<String, dynamic>)['checked_in_at'] as String).toLocal())
@@ -149,7 +145,7 @@ class HomeScreen extends ConsumerWidget {
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
                           color: AppColors.paper2,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                           border: Border.all(color: AppColors.ink2, width: 1),
                           boxShadow: [
                             BoxShadow(color: AppColors.gold.withValues(alpha: 0.16), blurRadius: 24, spreadRadius: 2),
@@ -169,7 +165,7 @@ class HomeScreen extends ConsumerWidget {
                               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
                               child: Container(
                                 padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppTheme.radiusSm)),
                                 child: SvgPicture.network(
                                   client.qrCodeUrl().toString(),
                                   headers: {'Authorization': 'Bearer ${client.authToken}'},
@@ -241,7 +237,7 @@ class HomeScreen extends ConsumerWidget {
                       );
                     },
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (err, _) => Text('Could not load membership: $err', style: const TextStyle(color: AppColors.tape)),
+                    error: (err, _) => Text('Could not load membership: $err', style: AppTheme.body(color: AppColors.tape)),
                   ),
                 ),
               ),
@@ -317,7 +313,7 @@ class HomeScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppColors.gold,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,11 +322,11 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 gymClass['name'] as String,
-                style: AppTheme.display(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.voidBg),
-                maxLines: 1,
+                style: AppTheme.display(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.voidBg),
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(_formatClassDateTime(startTime), style: AppTheme.mono(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.voidBg)),
             ],
           ),
@@ -351,8 +347,8 @@ class HomeScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
           children: [
-            Text(
-              '$streak',
+            CountUpNumber(
+              value: streak,
               style: AppTheme.display(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
@@ -376,9 +372,7 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// The Home header's notification affordance — a hairline-bordered circular
-/// icon button, matching the [Avatar]/[LogoBadge] ring treatment so it reads
-/// as part of the same header group rather than a bare Material icon button.
+/// Notification bell icon on the Home header, styled to match the avatar ring.
 class _NotificationBell extends StatelessWidget {
   const _NotificationBell({required this.onTap});
 
@@ -402,9 +396,7 @@ class _NotificationBell extends StatelessWidget {
   }
 }
 
-/// A single unlock action for the member's primary lock device, plus a link
-/// to the full [LockScreen] when a gym has more than one. Renders nothing
-/// when the gym has no lock devices set up.
+/// Quick unlock button for the main lock device, with a link to see all locks.
 class _LockQuickAction extends ConsumerStatefulWidget {
   const _LockQuickAction();
 
@@ -434,8 +426,7 @@ class _LockQuickActionState extends ConsumerState<_LockQuickAction> {
           try {
             final commandId = await client.unlockDevice(id);
 
-            // The ESP32 only polls for new commands every second, so give it
-            // room to pick this one up rather than guessing with a fixed delay.
+            // Device checks for new commands every second, so keep checking status.
             var status = 'pending';
             for (var attempt = 0; attempt < 30 && status == 'pending'; attempt++) {
               await Future.delayed(const Duration(milliseconds: 500));
@@ -491,19 +482,25 @@ class _LockQuickActionState extends ConsumerState<_LockQuickAction> {
                   const SizedBox(width: 12),
                   SizedBox(
                     height: 44,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.gold,
-                        foregroundColor: AppColors.voidBg,
+                    child: PressScale(
+                      enabled: !_pending,
+                      onTap: unlock,
+                      child: IgnorePointer(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.gold,
+                            foregroundColor: AppColors.voidBg,
+                          ),
+                          onPressed: _pending ? null : unlock,
+                          child: _pending
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.voidBg),
+                                )
+                              : Text('UNLOCK', style: AppTheme.mono(fontWeight: FontWeight.bold, color: AppColors.voidBg)),
+                        ),
                       ),
-                      onPressed: _pending ? null : unlock,
-                      child: _pending
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.voidBg),
-                            )
-                          : const Text('UNLOCK', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],

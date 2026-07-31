@@ -47,11 +47,11 @@
     <div class="grid grid-cols-3 gap-4">
         <div class="pf-card">
             <p class="pf-eyebrow mb-2">Members</p>
-            <p class="pf-stat-value">{{ $memberCount }}</p>
+            <p class="pf-stat-value" x-data="countUp({{ $memberCount }})" x-text="display">{{ $memberCount }}</p>
         </div>
         <div class="pf-card">
             <p class="pf-eyebrow mb-2">Staff</p>
-            <p class="pf-stat-value">{{ $staffCount }}</p>
+            <p class="pf-stat-value" x-data="countUp({{ $staffCount }})" x-text="display">{{ $staffCount }}</p>
         </div>
         <div class="pf-card">
             <p class="pf-eyebrow mb-2">Owner</p>

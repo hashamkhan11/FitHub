@@ -149,7 +149,7 @@ class _ClassesScreenState extends ConsumerState<ClassesScreen> {
                                 if (gymClass['instructor_name'] != null)
                                   Text(
                                     gymClass['instructor_name'] as String,
-                                    style: const TextStyle(color: AppColors.steel),
+                                    style: AppTheme.body(color: AppColors.steel),
                                   ),
                                 const SizedBox(height: 4),
                                 Text(_formatDateTime(startTime), style: AppTheme.mono(fontSize: 13, color: AppColors.steel)),
@@ -166,9 +166,15 @@ class _ClassesScreenState extends ConsumerState<ClassesScreen> {
                                     child: isPending ? spinner : const Text('LEAVE WAITLIST'),
                                   )
                                 else
-                                  FilledButton(
-                                    onPressed: isPending ? null : () => handleAction(classId, () => client.bookClass(classId)),
-                                    child: isPending ? spinner : const Text('BOOK'),
+                                  PressScale(
+                                    enabled: !isPending,
+                                    onTap: () => handleAction(classId, () => client.bookClass(classId)),
+                                    child: IgnorePointer(
+                                      child: FilledButton(
+                                        onPressed: isPending ? null : () => handleAction(classId, () => client.bookClass(classId)),
+                                        child: isPending ? spinner : const Text('BOOK'),
+                                      ),
+                                    ),
                                   ),
                               ],
                             ),
@@ -178,7 +184,7 @@ class _ClassesScreenState extends ConsumerState<ClassesScreen> {
                     );
                   },
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (err, _) => Center(child: Text('Could not load classes: $err', style: const TextStyle(color: AppColors.tape))),
+                  error: (err, _) => Center(child: Text('Could not load classes: $err', style: AppTheme.body(color: AppColors.tape))),
                 ),
               ),
             ),

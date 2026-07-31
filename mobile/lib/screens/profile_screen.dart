@@ -51,7 +51,7 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (err, _) => Center(
-                    child: Text('Could not load profile: $err', style: const TextStyle(color: AppColors.tape)),
+                    child: Text('Could not load profile: $err', style: AppTheme.body(color: AppColors.tape)),
                   ),
                 ),
               ),
@@ -266,11 +266,11 @@ class _EditDetailsCardState extends ConsumerState<_EditDetailsCard> {
               enabled: false,
               controller: TextEditingController(text: widget.member['email'] as String? ?? ''),
               decoration: const InputDecoration(labelText: 'Email (contact your gym to change)'),
-              style: const TextStyle(color: AppColors.steel),
+              style: AppTheme.body(color: AppColors.steel),
             ),
             if (_error != null) ...[
               const SizedBox(height: 8),
-              Text(_error!, style: const TextStyle(color: AppColors.tape)),
+              Text(_error!, style: AppTheme.body(color: AppColors.tape)),
             ],
             const SizedBox(height: 16),
             FilledButton(

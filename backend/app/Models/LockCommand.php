@@ -59,10 +59,8 @@ class LockCommand extends Model
     }
 
     /**
-     * "enroll"/"delete_fingerprint" commands carry a member_id + fingerprint_id
-     * in their payload. On success, sync that back onto the Member here so the
-     * dashboard reflects it as soon as the device acknowledges - the device
-     * itself only ever sees the numeric fingerprint ID, never the member.
+     * On success, saves the fingerprint ID back onto the Member so the
+     * dashboard updates right away. The device itself never knows the member.
      */
     private function applyFingerprintEffect(bool $succeeded): void
     {

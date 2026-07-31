@@ -47,9 +47,7 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> logout() async {
     final token = state.token;
     if (token != null) {
-      // Best-effort server-side revoke — if the device is offline or the
-      // token's already invalid, still clear local state below so the user
-      // isn't stuck "logged in" on this device.
+      // Try to log out on server too, but still clear local login if this fails.
       try {
         await ApiClient(token: token).logout();
       } catch (_) {}
@@ -58,8 +56,7 @@ class AuthNotifier extends Notifier<AuthState> {
     await _clearLocalSession();
   }
 
-  /// Drops local session state without calling the server — used when a
-  /// request comes back 401, so the already-invalid token isn't retried.
+  /// Clears local login without calling server, used when token is invalid.
   Future<void> forceLogout() async {
     if (state.token == null) return;
     await _clearLocalSession();

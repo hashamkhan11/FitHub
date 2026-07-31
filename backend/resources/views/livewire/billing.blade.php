@@ -130,7 +130,7 @@
                         </thead>
                         <tbody>
                             @foreach ($invoices as $invoice)
-                                <tr>
+                                <tr class="fh-tr">
                                     <td class="fh-td-mono">{{ $invoice->date()->format('M j, Y') }}</td>
                                     <td class="fh-td text-steel">{{ $invoice->number ?? '—' }}</td>
                                     <td class="fh-td">

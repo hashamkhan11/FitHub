@@ -36,15 +36,16 @@ Route::middleware(['auth:sanctum', 'gym.active'])->group(function () {
     Route::post('/classes/{class}/book', [ClassController::class, 'book']);
     Route::post('/bookings/{booking}/cancel', [ClassController::class, 'cancel']);
 
-    Route::get('/lock/devices', [LockController::class, 'devices']);
-    Route::post('/lock/devices/{device}/unlock', [LockController::class, 'unlock']);
-    Route::post('/lock/devices/{device}/lock', [LockController::class, 'lock']);
-    Route::get('/lock/commands/{command}/status', [LockController::class, 'commandStatus']);
+    Route::middleware('gym.hardware')->group(function () {
+        Route::get('/lock/devices', [LockController::class, 'devices']);
+        Route::post('/lock/devices/{device}/unlock', [LockController::class, 'unlock']);
+        Route::post('/lock/devices/{device}/lock', [LockController::class, 'lock']);
+        Route::get('/lock/commands/{command}/status', [LockController::class, 'commandStatus']);
+    });
 });
 
-// Device-facing routes: authenticated by a per-device token header inside the
-// controller (not Sanctum) since the ESP32 has no user session, only a secret
-// issued when the device was registered.
+// Device routes: use a per-device token header instead of normal login,
+// since the ESP32 has no user session.
 Route::middleware('throttle:120,1')->group(function () {
     Route::get('/lock/poll', [LockController::class, 'pollCommands']);
     Route::post('/lock/commands/{command}/ack', [LockController::class, 'ackCommand']);

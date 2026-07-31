@@ -15,9 +15,7 @@ import 'progress_screen.dart' show measurementsProvider;
   return ('Obese', StampVariant.bad);
 }
 
-/// Shared height entry/edit dialog — used both by the first-time empty state
-/// and the edit affordance once a height is already on file, so height stays
-/// "entered once, editable" from the BMI tab instead of living on Profile.
+/// Dialog to enter or edit height, used both first time and later for edits.
 Future<void> _showHeightDialog(BuildContext context, WidgetRef ref, {double? currentHeightCm}) async {
   final controller = TextEditingController(text: currentHeightCm?.toStringAsFixed(0) ?? '');
   String? error;
@@ -57,7 +55,7 @@ Future<void> _showHeightDialog(BuildContext context, WidgetRef ref, {double? cur
               ),
               if (error != null) ...[
                 const SizedBox(height: 8),
-                Text(error!, style: const TextStyle(color: AppColors.tape)),
+                Text(error!, style: AppTheme.body(color: AppColors.tape)),
               ],
             ],
           ),
@@ -129,7 +127,7 @@ class BmiScreen extends ConsumerWidget {
                 error: (err, _) => Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Text('Could not load your profile: $err', style: const TextStyle(color: AppColors.tape)),
+                    child: Text('Could not load your profile: $err', style: AppTheme.body(color: AppColors.tape)),
                   ),
                 ),
               ),
@@ -179,7 +177,7 @@ class _BmiBodyState extends ConsumerState<_BmiBody> {
       children: [
         InkWell(
           onTap: () => _showHeightDialog(context, ref, currentHeightCm: widget.heightCm),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
@@ -256,12 +254,12 @@ class _SourceOption extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: selected ? AppColors.gold.withValues(alpha: 0.12) : AppColors.paper2,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
           border: Border.all(color: selected ? AppColors.gold : AppColors.ink2, width: selected ? 1.5 : 1),
         ),
         child: Column(
@@ -308,7 +306,7 @@ class _BmiResultCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text(bmi.toStringAsFixed(1), style: AppTheme.display(fontSize: 56, fontWeight: FontWeight.w700)),
+                  CountUpNumber(value: bmi, decimals: 1, style: AppTheme.display(fontSize: 56, fontWeight: FontWeight.w700)),
                   const SizedBox(width: 14),
                   StampBadge(label: category, variant: variant),
                 ],
@@ -333,10 +331,7 @@ class _BmiResultCard extends StatelessWidget {
   }
 }
 
-/// A 4-band gauge (Underweight/Normal/Overweight/Obese) spanning a fixed
-/// 15-40 BMI display range, with a marker at the member's value. The range is
-/// only for laying out the bar — the true numeric BMI is shown above it, so
-/// an out-of-range value (e.g. BMI 44) just pins the marker to the end.
+/// Shows BMI on a 4-part bar (Underweight/Normal/Overweight/Obese), 15-40 range.
 class _BmiGauge extends StatelessWidget {
   const _BmiGauge({required this.bmi});
 
@@ -367,7 +362,7 @@ class _BmiGauge extends StatelessWidget {
                 right: 0,
                 top: 6,
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                   child: Row(
                     children: [
                       for (var i = 0; i < _bandFlex.length; i++)

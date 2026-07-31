@@ -35,22 +35,17 @@ class Attendance extends Model
     }
 
     /**
-     * Shared check-in/check-out toggle used by both the QR-scan dashboard flow
-     * and device-driven entry points (e.g. the fingerprint scanner).
+     * Toggles check-in/check-out. Used by QR scan and fingerprint scanner both.
      *
      * @return array{success: bool, unlock: bool, message: string}
      */
     public static function recordScan(Member $member): array
     {
         return DB::transaction(function () use ($member) {
-            // Lock the member row for the duration of this transaction so two
-            // near-simultaneous scans (double-tap, a flaky sensor, two devices) can't
-            // both read "no open session" and both insert a fresh check-in.
+            // Lock the member row so two scans at once can't both create a check-in.
             $member = Member::whereKey($member->id)->lockForUpdate()->firstOrFail();
 
-            // Not restricted to today: a forgotten checkout from a previous day must
-            // still be found and closed here, or it stays open forever and every
-            // later scan creates a brand-new check-in on top of it.
+            // Checks all days, not just today, so an old forgotten checkout gets closed.
             $openAttendance = $member->attendances()
                 ->whereNull('checked_out_at')
                 ->latest('checked_in_at')

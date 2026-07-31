@@ -10,8 +10,8 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsureGymIsActive
 {
     /**
-     * Block access for anyone (owner, staff, or member) belonging to a gym
-     * RankSol has suspended. Platform admins are unaffected by this check.
+     * Blocks access for anyone in a gym that RankSol has suspended.
+     * Platform admins are not affected.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
@@ -34,8 +34,7 @@ class EnsureGymIsActive
             return redirect()->route('login')->withErrors(['email' => $message]);
         }
 
-        // Trial gyms are never locked out entirely — they're funneled to Billing
-        // to pick a plan, since that's the only action that actually resolves this.
+        // Trial gyms aren't locked out fully — they're sent to Billing to pick a plan.
         if ($gym && $gym->isTrialExpired() && ! $request->routeIs('billing')) {
             $message = 'Your free trial has ended — choose a plan to keep using FitHub.';
 

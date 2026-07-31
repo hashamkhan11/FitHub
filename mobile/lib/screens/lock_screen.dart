@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/page_header.dart';
+import '../widgets/zine.dart';
 
 final lockDevicesProvider = FutureProvider.autoDispose((ref) async {
   final client = ref.watch(apiClientProvider);
@@ -32,9 +33,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
       try {
         final commandId = unlock ? await client.unlockDevice(deviceId) : await client.lockDevice(deviceId);
 
-        // The ESP32 only polls for new commands every second, so give it
-        // room to pick this one up and acknowledge it rather than guessing
-        // with a fixed delay before refreshing.
+        // Device checks for new commands every second, so keep checking status.
         var status = 'pending';
         for (var attempt = 0; attempt < 30 && status == 'pending'; attempt++) {
           await Future.delayed(const Duration(milliseconds: 500));
@@ -113,7 +112,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppColors.paper2,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                       border: Border.all(color: AppColors.ink2),
                     ),
                     child: Column(
@@ -137,13 +136,21 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                             Expanded(
                               child: SizedBox(
                                 height: 48,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.gold,
-                                    foregroundColor: AppColors.voidBg,
+                                child: PressScale(
+                                  enabled: !isPending,
+                                  onTap: () => sendCommand(id, name, true),
+                                  child: IgnorePointer(
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.gold,
+                                        foregroundColor: AppColors.voidBg,
+                                      ),
+                                      onPressed: isPending ? null : () => sendCommand(id, name, true),
+                                      child: isPending
+                                          ? spinner(AppColors.voidBg)
+                                          : Text('UNLOCK', style: AppTheme.mono(fontWeight: FontWeight.bold, color: AppColors.voidBg)),
+                                    ),
                                   ),
-                                  onPressed: isPending ? null : () => sendCommand(id, name, true),
-                                  child: isPending ? spinner(AppColors.voidBg) : const Text('UNLOCK', style: TextStyle(fontWeight: FontWeight.bold)),
                                 ),
                               ),
                             ),
@@ -158,7 +165,9 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                                     side: const BorderSide(color: AppColors.ink2),
                                   ),
                                   onPressed: isPending ? null : () => sendCommand(id, name, false),
-                                  child: isPending ? spinner(AppColors.ink) : const Text('LOCK', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  child: isPending
+                                      ? spinner(AppColors.ink)
+                                      : Text('LOCK', style: AppTheme.mono(fontWeight: FontWeight.bold, color: AppColors.ink)),
                                 ),
                               ),
                             ),
@@ -180,7 +189,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
               child: Text(
                 'Could not load lock devices:\n$err',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.ink, fontSize: 15),
+                style: AppTheme.body(color: AppColors.ink, fontSize: 15),
               ),
             ),
           ),

@@ -25,11 +25,9 @@ class MemberController extends Controller
     {
         $member = $request->user();
 
-        // Prefer whichever membership is actually granting access right now — an old
-        // paused/expired membership can have a later end_date than the real active one
-        // and would otherwise win a plain "latest end_date" lookup. Fall back to the
-        // latest by end_date only when nothing is currently active, so an expired
-        // member still sees their most recent membership instead of nothing.
+        // Prefer the membership that's actually active now over just the latest
+        // end_date, so an old paused one doesn't win. Fall back to latest end_date
+        // only if nothing is active, so expired members still see something.
         $membership = $member->activeMembership()
             ?? $member->memberships()->latest('end_date')->first();
 

@@ -5,6 +5,7 @@ namespace Tests\Feature\Api;
 use App\Models\Gym;
 use App\Models\LockDevice;
 use App\Models\Member;
+use App\Models\SubscriptionPlan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -25,9 +26,21 @@ class LockCommandStatusTest extends TestCase
         ]);
     }
 
+    private function gymWithHardwareAccess(): Gym
+    {
+        $plan = SubscriptionPlan::create([
+            'name' => 'Hardware Plan',
+            'slug' => 'hardware-plan-'.uniqid(),
+            'monthly_price' => 49,
+            'has_hardware_access' => true,
+        ]);
+
+        return Gym::factory()->create(['subscription_plan_id' => $plan->id]);
+    }
+
     public function test_member_can_poll_the_status_of_their_own_gyms_command(): void
     {
-        $gym = Gym::factory()->create();
+        $gym = $this->gymWithHardwareAccess();
         $member = Member::factory()->for($gym)->create();
         $command = $this->createCommand($gym, $member);
 
@@ -41,7 +54,7 @@ class LockCommandStatusTest extends TestCase
 
     public function test_member_sees_the_updated_status_once_the_device_acknowledges(): void
     {
-        $gym = Gym::factory()->create();
+        $gym = $this->gymWithHardwareAccess();
         $member = Member::factory()->for($gym)->create();
         $command = $this->createCommand($gym, $member);
         $command->markCompleted();
@@ -56,11 +69,11 @@ class LockCommandStatusTest extends TestCase
 
     public function test_member_cannot_poll_a_commands_status_from_another_gym(): void
     {
-        $gym = Gym::factory()->create();
+        $gym = $this->gymWithHardwareAccess();
         $owner = Member::factory()->for($gym)->create();
         $command = $this->createCommand($gym, $owner);
 
-        $otherMember = Member::factory()->create();
+        $otherMember = Member::factory()->for($this->gymWithHardwareAccess())->create();
         Sanctum::actingAs($otherMember, ['*']);
 
         $response = $this->getJson("/api/lock/commands/{$command->id}/status");

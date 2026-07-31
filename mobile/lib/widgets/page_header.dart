@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// The large-title header used at the top of every screen's body except
-/// Home (which keeps its own bespoke greeting header). Lives inline in the
-/// scrollable body/`SafeArea`, matching Home's structure, instead of a fixed
-/// `Scaffold.appBar` — this is what keeps every screen visually consistent
-/// with Home's borderless, in-body layout.
+/// Big title header used on every screen's body except Home.
 class PageHeader extends StatelessWidget {
   const PageHeader({
     super.key,
@@ -21,8 +17,7 @@ class PageHeader extends StatelessWidget {
   final Widget? trailing;
   final bool showBackButton;
 
-  /// Overrides the default back-chevron leading element — used by tab-root
-  /// screens that want Home's avatar treatment instead of back navigation.
+  /// Replaces the default back arrow, e.g. to show the avatar instead.
   final Widget? leading;
 
   final double fontSize;
@@ -61,9 +56,7 @@ class PageHeader extends StatelessWidget {
   }
 }
 
-/// A 44x44 hairline-ringed circular icon button, matching Home's
-/// notification bell treatment — used here for the back button and
-/// available to callers for their own `trailing` actions.
+/// Round icon button with a thin ring, used for back button and other actions.
 class HeaderIconButton extends StatelessWidget {
   const HeaderIconButton({super.key, required this.icon, required this.onTap, this.tooltip});
 
@@ -87,7 +80,9 @@ class _HeaderIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final button = Material(
-      color: Colors.transparent,
+      color: AppColors.paper2,
+      elevation: 2,
+      shadowColor: Colors.black.withValues(alpha: 0.4),
       shape: const CircleBorder(side: BorderSide(color: AppColors.ink2, width: 1)),
       child: InkWell(
         onTap: onTap,

@@ -63,6 +63,11 @@
                 <label for="is_active" class="text-sm text-ink">Active (visible to gyms)</label>
             </div>
 
+            <div class="flex items-center gap-2">
+                <input type="checkbox" wire:model="has_hardware_access" id="has_hardware_access" class="accent-teal">
+                <label for="has_hardware_access" class="text-sm text-ink">Includes lock/fingerprint hardware</label>
+            </div>
+
             <div class="col-span-2 flex gap-2">
                 <button type="submit" class="pf-btn-primary">
                     {{ $editingId ? 'Update' : 'Create' }}
@@ -86,13 +91,14 @@
                     <th class="pf-th">Monthly</th>
                     <th class="pf-th">Yearly</th>
                     <th class="pf-th">Stripe</th>
+                    <th class="pf-th">Hardware</th>
                     <th class="pf-th">Status</th>
                     <th class="pf-th">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($plans as $plan)
-                    <tr wire:key="plan-{{ $plan->id }}">
+                    <tr class="pf-tr" wire:key="plan-{{ $plan->id }}">
                         <td class="pf-td font-medium">{{ $plan->name }}</td>
                         <td class="pf-td-mono">${{ $plan->monthly_price }}</td>
                         <td class="pf-td-mono">{{ $plan->yearly_price ? '$'.$plan->yearly_price : '—' }}</td>
@@ -101,6 +107,13 @@
                                 <span class="pf-pill-good">Synced</span>
                             @else
                                 <span class="pf-pill-neutral">Not synced</span>
+                            @endif
+                        </td>
+                        <td class="pf-td">
+                            @if ($plan->has_hardware_access)
+                                <span class="pf-pill-good">Included</span>
+                            @else
+                                <span class="pf-pill-neutral">Software only</span>
                             @endif
                         </td>
                         <td class="pf-td">

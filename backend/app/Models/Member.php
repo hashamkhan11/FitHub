@@ -48,7 +48,7 @@ class Member extends Authenticatable
     }
 
     /**
-     * Fallback avatar text (e.g. "JS") when no photo has been uploaded.
+     * Initials shown as avatar text (e.g. "JS") when no photo is uploaded.
      */
     public function getInitialsAttribute(): string
     {
@@ -78,7 +78,7 @@ class Member extends Authenticatable
     }
 
     /**
-     * Human-facing member ID, e.g. "M-0007" — distinguishes same-named members.
+     * Member ID shown to people, e.g. "M-0007", to tell same-named members apart.
      */
     public function getDisplayCodeAttribute(): string
     {
@@ -101,8 +101,7 @@ class Member extends Authenticatable
     }
 
     /**
-     * The most recently created membership regardless of its status — used where the
-     * caller needs to distinguish active/expired/pending rather than just "is active".
+     * The newest membership, any status — use when you need more than just active/not.
      */
     public function latestMembership(): HasOne
     {
@@ -110,9 +109,8 @@ class Member extends Authenticatable
     }
 
     /**
-     * The single membership (if any) currently granting access — not necessarily the
-     * one with the furthest end_date, since an older paused/expired membership can
-     * outlast a genuinely active one.
+     * The membership currently granting access, if any (not always the one with
+     * the latest end_date).
      */
     public function activeMembership(): ?Membership
     {
