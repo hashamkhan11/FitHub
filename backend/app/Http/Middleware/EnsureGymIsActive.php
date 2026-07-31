@@ -21,7 +21,7 @@ class EnsureGymIsActive
         $gym = $user?->gym;
 
         if ($gym && $gym->isSuspended()) {
-            $message = 'This gym\'s account has been suspended. Please contact RankSol support.';
+            $message = 'This gym\'s account has been suspended. Please contact '.config('app.support_email').' for help.';
 
             if ($request->expectsJson()) {
                 return response()->json(['message' => $message], 403);
@@ -32,6 +32,18 @@ class EnsureGymIsActive
             $request->session()->regenerateToken();
 
             return redirect()->route('login')->withErrors(['email' => $message]);
+        }
+
+        // Trial gyms are never locked out entirely — they're funneled to Billing
+        // to pick a plan, since that's the only action that actually resolves this.
+        if ($gym && $gym->isTrialExpired() && ! $request->routeIs('billing')) {
+            $message = 'Your free trial has ended — choose a plan to keep using FitHub.';
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $message], 402);
+            }
+
+            return redirect()->route('billing')->with('status', $message);
         }
 
         return $next($request);

@@ -66,7 +66,7 @@ class GymCreate extends Component
             'name' => $this->gym_name,
             'email' => $this->gym_email,
             'phone' => $this->gym_phone ?: null,
-            'currency_code' => 'PKR',
+            'currency_code' => 'USD',
             'subscription_status' => $this->subscription_status,
             'subscription_plan_id' => $plan->id,
             'plan_name' => $plan->name,
@@ -81,6 +81,7 @@ class GymCreate extends Component
             'email' => $this->owner_email,
             'password' => $temporaryPassword,
             'role' => 'owner',
+            'email_verified_at' => now(),
         ]);
 
         Mail::to($this->owner_email)->send(new WelcomeGymOwnerMail($gym, $this->owner_email, $temporaryPassword));

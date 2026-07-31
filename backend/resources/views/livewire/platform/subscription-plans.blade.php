@@ -5,7 +5,10 @@
     </div>
 
     @if (session('status'))
-        <div class="pf-card border-teal/30 bg-teal/5 text-sm text-teal">{{ session('status') }}</div>
+        <div class="pf-card border-teal/30 bg-teal/5 text-sm text-teal-2">{{ session('status') }}</div>
+    @endif
+    @if (session('error'))
+        <div class="pf-card border-tape/30 bg-tape/5 text-sm text-tape">{{ session('error') }}</div>
     @endif
     @error('sync') <div class="pf-card border-tape/30 bg-tape/5 text-sm text-tape">{{ $message }}</div> @enderror
 
@@ -84,12 +87,12 @@
                     <th class="pf-th">Yearly</th>
                     <th class="pf-th">Stripe</th>
                     <th class="pf-th">Status</th>
-                    <th class="pf-th"></th>
+                    <th class="pf-th">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse ($plans as $plan)
-                    <tr>
+                    <tr wire:key="plan-{{ $plan->id }}">
                         <td class="pf-td font-medium">{{ $plan->name }}</td>
                         <td class="pf-td-mono">${{ $plan->monthly_price }}</td>
                         <td class="pf-td-mono">{{ $plan->yearly_price ? '$'.$plan->yearly_price : '—' }}</td>
@@ -107,11 +110,79 @@
                                 <span class="pf-pill-neutral">Inactive</span>
                             @endif
                         </td>
-                        <td class="pf-td flex gap-3">
-                            <button wire:click="edit({{ $plan->id }})" class="text-teal hover:underline text-xs font-display uppercase tracking-wide">Edit</button>
-                            <button wire:click="syncToStripe({{ $plan->id }})" wire:loading.attr="disabled" class="text-mist hover:text-ink hover:underline text-xs font-display uppercase tracking-wide">
-                                {{ $plan->isSyncedToStripe() ? 'Re-sync' : 'Sync to Stripe' }}
-                            </button>
+                        <td class="pf-td text-right">
+                            <div
+                                x-data="{
+                                    open: false,
+                                    menuStyle: '',
+                                    toggle() {
+                                        if (this.open) { this.open = false; return }
+                                        const r = this.$refs.trigger.getBoundingClientRect()
+                                        const w = 224
+                                        const spaceBelow = window.innerHeight - r.bottom
+                                        const openUp = spaceBelow < 300 && r.top > 300
+                                        const left = Math.min(r.right - w, window.innerWidth - w - 8)
+                                        this.menuStyle = `left:${left}px;` + (openUp ? `bottom:${window.innerHeight - r.top + 6}px;` : `top:${r.bottom + 6}px;`)
+                                        this.open = true
+                                    }
+                                }"
+                                @click.window="open && !$refs.trigger.contains($event.target) && !($refs.menu && $refs.menu.contains($event.target)) && (open = false)"
+                                @scroll.window="open = false"
+                                @resize.window="open = false"
+                            >
+                                <button
+                                    x-ref="trigger"
+                                    @click="toggle()"
+                                    type="button"
+                                    aria-haspopup="true"
+                                    :aria-expanded="open"
+                                    class="inline-flex items-center justify-center w-8 h-8 rounded text-steel hover:bg-chalk hover:text-ink transition"
+                                    aria-label="Actions for {{ $plan->name }}"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4">
+                                        <circle cx="12" cy="5" r="1.8" />
+                                        <circle cx="12" cy="12" r="1.8" />
+                                        <circle cx="12" cy="19" r="1.8" />
+                                    </svg>
+                                </button>
+
+                                <template x-teleport="body">
+                                    <div
+                                        x-ref="menu"
+                                        x-show="open"
+                                        x-cloak
+                                        :style="menuStyle"
+                                        style="display: none;"
+                                        class="fixed z-50 w-56 rounded border border-chalk-3 bg-chalk-2 shadow-xl shadow-void/40 py-1.5"
+                                        x-transition:enter="transition ease-out duration-100"
+                                        x-transition:enter-start="opacity-0 scale-95"
+                                        x-transition:enter-end="opacity-100 scale-100"
+                                        x-transition:leave="transition ease-in duration-75"
+                                        x-transition:leave-start="opacity-100 scale-100"
+                                        x-transition:leave-end="opacity-0 scale-95"
+                                        @keydown.escape.window="open = false"
+                                    >
+                                        <button type="button" wire:click="edit({{ $plan->id }})" @click="open = false" class="fh-menu-item">Edit</button>
+
+                                        <button type="button" wire:click="syncToStripe({{ $plan->id }})" wire:loading.attr="disabled" @click="open = false" class="fh-menu-item">
+                                            {{ $plan->isSyncedToStripe() ? 'Re-sync to Stripe' : 'Sync to Stripe' }}
+                                        </button>
+
+                                        <div class="border-t border-chalk-3 my-1"></div>
+
+                                        <button
+                                            type="button"
+                                            x-on:click="open = false; $store.confirmModal.show({
+                                                message: 'Permanently delete the ' + @js($plan->name) + ' plan? This cannot be undone.',
+                                                danger: true,
+                                                confirmLabel: 'Delete',
+                                                onConfirm: () => $wire.delete({{ $plan->id }})
+                                            })"
+                                            class="fh-menu-item text-tape hover:bg-tape/5"
+                                        >Delete Plan</button>
+                                    </div>
+                                </template>
+                            </div>
                         </td>
                     </tr>
                 @empty

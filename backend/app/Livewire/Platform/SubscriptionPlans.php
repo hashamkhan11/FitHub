@@ -123,6 +123,22 @@ class SubscriptionPlans extends Component
         }
     }
 
+    public function delete(int $planId): void
+    {
+        $plan = SubscriptionPlan::findOrFail($planId);
+
+        if ($plan->gyms()->exists()) {
+            session()->flash('error', "{$plan->name} is still assigned to at least one gym and can't be deleted. Deactivate it instead.");
+
+            return;
+        }
+
+        $name = $plan->name;
+        $plan->delete();
+
+        session()->flash('status', "{$name} has been deleted.");
+    }
+
     public function resetForm(): void
     {
         $this->reset(['editingId', 'name', 'description', 'monthly_price', 'yearly_price', 'member_limit', 'staff_limit', 'features', 'is_active']);

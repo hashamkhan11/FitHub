@@ -62,7 +62,10 @@ class Membership extends Model
 
         $started = $this->start_date !== null && ! $this->start_date->isFuture();
 
-        return $started && ($this->end_date?->isFuture() ?? false);
+        // end_date is cast to midnight, so a plain isFuture() would expire a member at
+        // 00:00 on the very day they're still paid through. Compare against the end of
+        // that day instead so coverage lasts the whole calendar day it's paid for.
+        return $started && ($this->end_date?->copy()->endOfDay()->isFuture() ?? false);
     }
 
     public function isPaused(): bool
@@ -107,7 +110,7 @@ class Membership extends Model
      */
     public function isOverdue(): bool
     {
-        return ! $this->isPaused() && $this->payment_status !== 'paid' && ($this->end_date?->isPast() ?? false);
+        return ! $this->isPaused() && $this->payment_status !== 'paid' && ($this->end_date?->copy()->endOfDay()->isPast() ?? false);
     }
 
     protected function amountPaid(): Attribute

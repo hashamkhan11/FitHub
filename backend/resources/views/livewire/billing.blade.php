@@ -1,9 +1,7 @@
-<div class="max-w-[1000px] mx-auto space-y-6">
-    <div>
-        <h1 class="fh-heading text-2xl">Billing</h1>
-        <p class="text-sm text-steel mt-1">Your gym's FitHub subscription.</p>
-    </div>
-
+<div class="max-w-[1400px] mx-auto space-y-6">
+    @if (session('status'))
+        <div class="fh-card border-warn/40 text-sm text-warn">{{ session('status') }}</div>
+    @endif
     @error('subscribe') <div class="fh-card border-tape/40 text-sm text-tape">{{ $message }}</div> @enderror
     @error('manage') <div class="fh-card border-tape/40 text-sm text-tape">{{ $message }}</div> @enderror
 
@@ -26,6 +24,8 @@
                     <span class="fh-pill-bad">Suspended</span>
                 @elseif ($gym->isOnTrial())
                     <span class="fh-pill-warn">Trial &middot; {{ $gym->trialDaysRemaining() }}d left</span>
+                @elseif ($subscription && $subscription->ends_at)
+                    <span class="fh-pill-warn">Canceling</span>
                 @else
                     <span class="fh-pill-good">Active</span>
                 @endif
@@ -33,7 +33,7 @@
         </div>
 
         @if ($subscription)
-            <div class="border-t border-white/10 mt-5 pt-5 flex items-center justify-between flex-wrap gap-4">
+            <div class="border-t border-chalk-3 mt-5 pt-5 flex items-center justify-between flex-wrap gap-4">
                 <div class="text-sm text-steel">
                     @if ($gym->pm_type)
                         <p>Card on file: {{ ucfirst($gym->pm_type) }} &middot;&middot;&middot;&middot; {{ $gym->pm_last_four }}</p>
@@ -49,7 +49,25 @@
         @endif
     </div>
 
-    @unless ($subscription)
+    @if ($checkoutClientSecret)
+        <div class="fh-card">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="fh-heading text-sm">Complete your subscription</h2>
+                <button wire:click="$set('checkoutClientSecret', null)" class="text-xs text-steel hover:text-ink">&larr; Back to plans</button>
+            </div>
+
+            <div
+                wire:ignore
+                wire:key="stripe-checkout-{{ $checkoutClientSecret }}"
+                x-data
+                x-init="
+                    const stripe = Stripe(@js($stripeKey));
+                    stripe.initEmbeddedCheckout({ clientSecret: @js($checkoutClientSecret) })
+                        .then((checkout) => checkout.mount($el));
+                "
+            ></div>
+        </div>
+    @elseif (! $subscription)
         <div>
             <h2 class="fh-heading text-sm mb-4">Choose a plan</h2>
             <div class="grid sm:grid-cols-2 gap-4">
@@ -93,5 +111,53 @@
                 @endforelse
             </div>
         </div>
-    @endunless
+    @endif
+
+    @if ($invoices->isNotEmpty())
+        <div>
+            <h2 class="fh-heading text-sm mb-4">Invoice History</h2>
+            <div class="fh-card-flush">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr>
+                                <th class="fh-th">Date</th>
+                                <th class="fh-th">Number</th>
+                                <th class="fh-th">Status</th>
+                                <th class="fh-th font-mono normal-case tracking-normal">Amount</th>
+                                <th class="fh-th"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($invoices as $invoice)
+                                <tr>
+                                    <td class="fh-td-mono">{{ $invoice->date()->format('M j, Y') }}</td>
+                                    <td class="fh-td text-steel">{{ $invoice->number ?? '—' }}</td>
+                                    <td class="fh-td">
+                                        @if ($invoice->status === 'paid')
+                                            <span class="fh-pill-good">Paid</span>
+                                        @elseif ($invoice->status === 'open')
+                                            <span class="fh-pill-warn">Open</span>
+                                        @else
+                                            <span class="fh-pill-bad">{{ ucfirst($invoice->status) }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="fh-td-mono">{{ $invoice->total() }}</td>
+                                    <td class="fh-td text-right whitespace-nowrap">
+                                        @if ($invoice->hosted_invoice_url)
+                                            <a href="{{ $invoice->hosted_invoice_url }}" target="_blank" rel="noopener" class="fh-link-action text-gold-3">View</a>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
+
+@push('scripts')
+    <script src="https://js.stripe.com/v3/"></script>
+@endpush

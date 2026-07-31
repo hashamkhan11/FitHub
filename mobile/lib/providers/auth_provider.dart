@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../services/api_client.dart';
 import '../services/push_notifications.dart';
+
+const _secureStorage = FlutterSecureStorage();
 
 class AuthState {
   final String? token;
@@ -21,8 +23,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> _restoreSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
+    final token = await _secureStorage.read(key: 'token');
     if (token != null) {
       state = AuthState(token: token);
       await registerPushToken(ApiClient(token: token));
@@ -33,8 +34,7 @@ class AuthNotifier extends Notifier<AuthState> {
     final client = ApiClient();
     final data = await client.login(email, password);
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('token', data['token'] as String);
+    await _secureStorage.write(key: 'token', value: data['token'] as String);
 
     state = AuthState(
       token: data['token'] as String,
@@ -45,8 +45,28 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('token');
+    final token = state.token;
+    if (token != null) {
+      // Best-effort server-side revoke — if the device is offline or the
+      // token's already invalid, still clear local state below so the user
+      // isn't stuck "logged in" on this device.
+      try {
+        await ApiClient(token: token).logout();
+      } catch (_) {}
+    }
+
+    await _clearLocalSession();
+  }
+
+  /// Drops local session state without calling the server — used when a
+  /// request comes back 401, so the already-invalid token isn't retried.
+  Future<void> forceLogout() async {
+    if (state.token == null) return;
+    await _clearLocalSession();
+  }
+
+  Future<void> _clearLocalSession() async {
+    await _secureStorage.delete(key: 'token');
     state = const AuthState();
   }
 }
@@ -55,5 +75,8 @@ final authProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new)
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   final token = ref.watch(authProvider).token;
-  return ApiClient(token: token);
+  return ApiClient(
+    token: token,
+    onSessionExpired: () => ref.read(authProvider.notifier).forceLogout(),
+  );
 });

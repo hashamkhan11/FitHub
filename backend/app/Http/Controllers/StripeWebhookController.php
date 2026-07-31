@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PaymentFailedMail;
+use App\Mail\SubscriptionCanceledMail;
 use App\Models\ActivityLog;
 use App\Models\Gym;
 use App\Models\PlatformActivityLog;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Cashier\Http\Controllers\WebhookController as CashierWebhookController;
 
 class StripeWebhookController extends CashierWebhookController
@@ -22,23 +25,53 @@ class StripeWebhookController extends CashierWebhookController
     {
         $response = parent::handleCustomerSubscriptionDeleted($payload);
 
-        $this->syncGymFromStripeEvent($payload);
+        $gym = $this->syncGymFromStripeEvent($payload);
+
+        if ($gym && $gym->email) {
+            Mail::to($gym->email)->send(new SubscriptionCanceledMail($gym));
+        }
 
         return $response;
     }
 
-    private function syncGymFromStripeEvent(array $payload): void
+    /**
+     * Cashier's base controller has no handler for this event — Stripe fires
+     * it as soon as a renewal charge fails, well before the subscription
+     * itself transitions to 'unpaid'/'canceled', so this is the earliest
+     * point we can warn an owner their card needs attention.
+     */
+    protected function handleInvoicePaymentFailed(array $payload): \Symfony\Component\HttpFoundation\Response
+    {
+        $stripeCustomerId = $payload['data']['object']['customer'] ?? null;
+        $gym = $stripeCustomerId ? Gym::where('stripe_id', $stripeCustomerId)->first() : null;
+
+        if ($gym && $gym->email) {
+            Mail::to($gym->email)->send(new PaymentFailedMail($gym));
+
+            ActivityLog::create([
+                'gym_id' => $gym->id,
+                'user_id' => null,
+                'action' => 'billing.payment_failed',
+                'description' => "A payment for {$gym->name} failed.",
+                'created_at' => now(),
+            ]);
+        }
+
+        return $this->successMethod();
+    }
+
+    private function syncGymFromStripeEvent(array $payload): ?Gym
     {
         $stripeCustomerId = $payload['data']['object']['customer'] ?? null;
 
         if (! $stripeCustomerId) {
-            return;
+            return null;
         }
 
         $gym = Gym::where('stripe_id', $stripeCustomerId)->first();
 
         if (! $gym) {
-            return;
+            return null;
         }
 
         $stripeStatus = $payload['data']['object']['status'] ?? null;
@@ -73,5 +106,7 @@ class StripeWebhookController extends CashierWebhookController
             'description' => $description,
             'created_at' => now(),
         ]);
+
+        return $gym;
     }
 }

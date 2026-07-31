@@ -3,6 +3,7 @@
 namespace App\Livewire\Platform;
 
 use App\Models\Gym;
+use App\Models\PlatformActivityLog;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -27,6 +28,54 @@ class Gyms extends Component
     public function updatingStatusFilter(): void
     {
         $this->resetPage();
+    }
+
+    public function activate(int $gymId): void
+    {
+        $gym = Gym::findOrFail($gymId);
+
+        $gym->update([
+            'subscription_status' => 'active',
+            'suspended_at' => null,
+            'suspended_reason' => null,
+        ]);
+
+        PlatformActivityLog::record('gym.activated', "Marked {$gym->name} as active.", $gym);
+
+        session()->flash('status', "{$gym->name} is now active.");
+    }
+
+    public function suspend(int $gymId, ?string $reason): void
+    {
+        if (! $reason) {
+            return;
+        }
+
+        $gym = Gym::findOrFail($gymId);
+
+        $gym->update([
+            'subscription_status' => 'suspended',
+            'suspended_at' => now(),
+            'suspended_reason' => $reason,
+        ]);
+
+        PlatformActivityLog::record('gym.suspended', "Suspended {$gym->name}: {$reason}", $gym);
+
+        session()->flash('status', "{$gym->name} has been suspended.");
+    }
+
+    public function deleteGym(int $gymId): void
+    {
+        $gym = Gym::findOrFail($gymId);
+        $name = $gym->name;
+
+        // Logged before delete() - platform_activity_logs.gym_id is a foreign
+        // key, so it can't reference a gym row that's already gone.
+        PlatformActivityLog::record('gym.deleted', "Permanently deleted gym {$name} and all its data.", $gym);
+
+        $gym->delete();
+
+        session()->flash('status', "{$name} has been permanently deleted.");
     }
 
     public function render()

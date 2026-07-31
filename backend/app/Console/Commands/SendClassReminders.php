@@ -50,7 +50,8 @@ class SendClassReminders extends Command
                 ->withNotification(Notification::create(
                     'Upcoming class reminder',
                     "{$booking->gymClass->name} starts at ".$booking->gymClass->start_time->format('g:i A')
-                ));
+                ))
+                ->withData(['type' => 'class']);
 
             try {
                 $messaging->send($message);

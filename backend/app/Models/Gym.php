@@ -27,6 +27,7 @@ class Gym extends Model
         'plan_price',
         'billing_cycle',
         'trial_ends_at',
+        'trial_reminder_sent_at',
         'suspended_at',
         'suspended_reason',
         'subscription_plan_id',
@@ -39,6 +40,7 @@ class Gym extends Model
         return [
             'plan_price' => 'decimal:2',
             'trial_ends_at' => 'datetime',
+            'trial_reminder_sent_at' => 'datetime',
             'suspended_at' => 'datetime',
         ];
     }
@@ -58,6 +60,11 @@ class Gym extends Model
     public function staff(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    public function owner(): ?User
+    {
+        return $this->staff()->where('role', 'owner')->first();
     }
 
     public function members(): HasMany
@@ -122,5 +129,19 @@ class Gym extends Model
     public function isTrialExpired(): bool
     {
         return $this->isOnTrial() && $this->trial_ends_at && $this->trial_ends_at->isPast();
+    }
+
+    public function canAddMember(): bool
+    {
+        $limit = $this->subscriptionPlan?->member_limit;
+
+        return $limit === null || $this->members()->count() < $limit;
+    }
+
+    public function canAddStaff(): bool
+    {
+        $limit = $this->subscriptionPlan?->staff_limit;
+
+        return $limit === null || $this->staff()->count() < $limit;
     }
 }

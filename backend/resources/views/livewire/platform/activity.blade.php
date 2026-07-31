@@ -22,7 +22,7 @@
                         <td class="pf-td">{{ $log->platformAdmin?->name ?? 'System' }}</td>
                         <td class="pf-td">
                             @if ($log->gym)
-                                <a href="/ranksol/gyms/{{ $log->gym->id }}" class="text-teal hover:underline">{{ $log->gym->name }}</a>
+                                <a href="/ranksol/gyms/{{ $log->gym->id }}" class="text-teal-2 hover:underline">{{ $log->gym->name }}</a>
                             @else
                                 —
                             @endif

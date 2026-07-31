@@ -42,7 +42,7 @@ class Bookings extends Component
             'selectedClass' => $selectedClass,
             'bookings' => $selectedClass
                 ? $selectedClass->bookings()
-                    ->with('member')
+                    ->with(['member' => fn ($q) => $q->withTrashed()])
                     ->where('status', '!=', 'cancelled')
                     ->orderByRaw("status = 'waitlisted'")
                     ->oldest()
@@ -86,7 +86,7 @@ class Bookings extends Component
         Gate::authorize('manage-bookings');
 
         $class = GymClass::where('gym_id', auth()->user()->gym_id)->findOrFail($this->classId);
-        $booking = $class->bookings()->with('member')->findOrFail($bookingId);
+        $booking = $class->bookings()->with(['member' => fn ($q) => $q->withTrashed()])->findOrFail($bookingId);
         $memberName = $booking->member->name;
 
         $class->cancelBooking($booking);

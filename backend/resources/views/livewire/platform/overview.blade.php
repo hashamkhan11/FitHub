@@ -15,7 +15,7 @@
         </div>
         <div class="pf-card">
             <p class="pf-eyebrow mb-2">On Trial</p>
-            <p class="pf-stat-value text-gold">{{ $trialGyms }}</p>
+            <p class="pf-stat-value text-[#B9862E]">{{ $trialGyms }}</p>
         </div>
         <div class="pf-card">
             <p class="pf-eyebrow mb-2">Suspended</p>

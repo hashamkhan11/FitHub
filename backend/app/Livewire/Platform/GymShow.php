@@ -9,6 +9,7 @@ use App\Models\SubscriptionPlan;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -26,11 +27,39 @@ class GymShow extends Component
 
     public string $suspend_reason = '';
 
+    public string $gym_name = '';
+
+    public string $gym_email = '';
+
+    public string $gym_phone = '';
+
     public function mount(Gym $gym): void
     {
         $this->gym = $gym;
         $this->subscription_plan_id = (string) ($gym->subscription_plan_id ?? '');
         $this->billing_cycle = $gym->billing_cycle;
+        $this->gym_name = $gym->name;
+        $this->gym_email = $gym->email;
+        $this->gym_phone = $gym->phone ?? '';
+    }
+
+    public function updateGymProfile(): void
+    {
+        $this->validate([
+            'gym_name' => 'required|string|max:255',
+            'gym_email' => ['required', 'email', 'max:255', Rule::unique('gyms', 'email')->ignore($this->gym->id)],
+            'gym_phone' => 'nullable|string|max:20',
+        ]);
+
+        $this->gym->update([
+            'name' => $this->gym_name,
+            'email' => $this->gym_email,
+            'phone' => $this->gym_phone ?: null,
+        ]);
+
+        PlatformActivityLog::record('gym.profile_updated', "Updated profile details for {$this->gym->name}.", $this->gym);
+
+        session()->flash('status', 'Gym profile updated.');
     }
 
     public function updatePlan(): void

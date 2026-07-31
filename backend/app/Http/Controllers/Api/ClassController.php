@@ -23,6 +23,7 @@ class ClassController extends Controller
                 CloudMessage::new()
                     ->withToken($fcmToken)
                     ->withNotification(Notification::create($title, $body))
+                    ->withData(['type' => 'class'])
             );
         } catch (\Throwable $e) {
             report($e);

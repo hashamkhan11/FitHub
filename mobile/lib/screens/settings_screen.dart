@@ -1,0 +1,184 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../providers/auth_provider.dart';
+import '../services/api_client.dart';
+import '../theme/app_theme.dart';
+import '../widgets/page_header.dart';
+import 'password_screen.dart';
+import 'payment_history_screen.dart';
+import 'profile_screen.dart';
+
+class SettingsScreen extends ConsumerWidget {
+  const SettingsScreen({super.key});
+
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('LOG OUT'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('CANCEL')),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('LOG OUT', style: TextStyle(color: AppColors.tape)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await ref.read(authProvider.notifier).logout();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: PageHeader(title: 'Settings', showBackButton: false),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                children: [
+                  _SettingsRow(
+                    icon: Icons.person_outline,
+                    label: 'Profile',
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProfileScreen())),
+                  ),
+                  _SettingsRow(
+                    icon: Icons.lock_outline,
+                    label: 'Change Password',
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PasswordScreen())),
+                  ),
+                  _SettingsRow(
+                    icon: Icons.receipt_long_outlined,
+                    label: 'Payment History',
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaymentHistoryScreen())),
+                  ),
+                  const SizedBox(height: 24),
+                  const _LegalCard(),
+                  const SizedBox(height: 24),
+                  _SettingsRow(
+                    icon: Icons.logout,
+                    label: 'Log Out',
+                    destructive: true,
+                    onTap: () => _confirmLogout(context, ref),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsRow extends StatelessWidget {
+  const _SettingsRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.destructive = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = destructive ? AppColors.tape : AppColors.gold;
+    final labelColor = destructive ? AppColors.tape : AppColors.ink;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, color: iconColor),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTheme.display(fontSize: 14, fontWeight: FontWeight.w600, color: labelColor),
+                ),
+              ),
+              if (!destructive) const Icon(Icons.chevron_right, color: AppColors.steel),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LegalCard extends StatelessWidget {
+  const _LegalCard();
+
+  Future<void> _open(BuildContext context, String path) async {
+    final uri = Uri.parse('${ApiClient.webBaseUrl}$path');
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open link.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('LEGAL', style: AppTheme.display(fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: 1)),
+            const SizedBox(height: 4),
+            _LegalLink(label: 'Terms of Service', onTap: () => _open(context, '/legal/terms')),
+            _LegalLink(label: 'Privacy Policy', onTap: () => _open(context, '/legal/privacy')),
+            _LegalLink(label: 'Delete My Data', onTap: () => _open(context, '/legal/data-deletion')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LegalLink extends StatelessWidget {
+  const _LegalLink({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: AppTheme.mono(fontSize: 13, color: AppColors.ink)),
+            const Icon(Icons.open_in_new, size: 15, color: AppColors.steel),
+          ],
+        ),
+      ),
+    );
+  }
+}

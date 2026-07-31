@@ -32,6 +32,8 @@ class Classes extends Component
 
     public bool $is_active = true;
 
+    public bool $showForm = false;
+
     public function mount(): void
     {
         Gate::authorize('view-classes');
@@ -100,9 +102,17 @@ class Classes extends Component
         ];
 
         if ($this->editingId) {
-            GymClass::where('gym_id', auth()->user()->gym_id)
-                ->findOrFail($this->editingId)
-                ->update($data);
+            $class = GymClass::where('gym_id', auth()->user()->gym_id)->findOrFail($this->editingId);
+
+            $bookedCount = $class->bookings()->where('status', 'booked')->count();
+
+            if ($this->capacity < $bookedCount) {
+                $this->addError('capacity', "Capacity can't be reduced below the {$bookedCount} members already booked into this class.");
+
+                return;
+            }
+
+            $class->update($data);
         } else {
             GymClass::create([...$data, 'gym_id' => auth()->user()->gym_id]);
         }
@@ -110,8 +120,16 @@ class Classes extends Component
         $this->resetForm();
     }
 
+    public function createNew(): void
+    {
+        $this->resetForm();
+        $this->showForm = true;
+    }
+
     public function edit(int $classId): void
     {
+        Gate::authorize('manage-classes');
+
         $class = GymClass::where('gym_id', auth()->user()->gym_id)->findOrFail($classId);
 
         $this->editingId = $class->id;
@@ -121,6 +139,7 @@ class Classes extends Component
         $this->duration_minutes = $class->duration_minutes;
         $this->capacity = $class->capacity;
         $this->is_active = $class->is_active;
+        $this->showForm = true;
     }
 
     public function delete(int $classId): void
@@ -136,7 +155,7 @@ class Classes extends Component
 
     public function resetForm(): void
     {
-        $this->reset(['editingId', 'name', 'instructor_name', 'start_time', 'duration_minutes', 'capacity', 'is_active']);
+        $this->reset(['editingId', 'name', 'instructor_name', 'start_time', 'duration_minutes', 'capacity', 'is_active', 'showForm']);
         $this->is_active = true;
         $this->duration_minutes = 60;
         $this->capacity = 10;

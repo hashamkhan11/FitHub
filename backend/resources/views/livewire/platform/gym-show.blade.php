@@ -17,8 +17,32 @@
     </div>
 
     @if (session('status'))
-        <div class="pf-card border-teal/30 bg-teal/5 text-sm text-teal">{{ session('status') }}</div>
+        <div class="pf-card border-teal/30 bg-teal/5 text-sm text-teal-2">{{ session('status') }}</div>
     @endif
+
+    <div class="pf-card max-w-2xl">
+        <h2 class="pf-heading text-sm mb-4">Gym Profile</h2>
+        <form wire:submit="updateGymProfile" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+                <label class="pf-label">Name</label>
+                <input type="text" wire:model="gym_name" class="pf-input">
+                @error('gym_name') <p class="pf-error">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label class="pf-label">Email</label>
+                <input type="email" wire:model="gym_email" class="pf-input">
+                @error('gym_email') <p class="pf-error">{{ $message }}</p> @enderror
+            </div>
+            <div>
+                <label class="pf-label">Phone</label>
+                <input type="text" wire:model="gym_phone" class="pf-input">
+                @error('gym_phone') <p class="pf-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="sm:col-span-3">
+                <button type="submit" class="pf-btn-primary">Save Profile</button>
+            </div>
+        </form>
+    </div>
 
     <div class="grid grid-cols-3 gap-4">
         <div class="pf-card">
@@ -77,19 +101,19 @@
                 <h2 class="pf-heading text-sm">Account Actions</h2>
                 @error('resend') <p class="pf-error">{{ $message }}</p> @enderror
 
-                <button wire:click="resendWelcome" wire:confirm="Reset the owner's password and resend the welcome email?" class="pf-btn-secondary w-full">
+                <button type="button" x-on:click="$store.confirmModal.show({ message: 'Reset the owner\'s password and resend the welcome email?', confirmLabel: 'Resend', onConfirm: () => $wire.resendWelcome() })" class="pf-btn-secondary w-full">
                     Resend Welcome Email
                 </button>
 
                 @if ($gym->isSuspended())
-                    <button wire:click="activate" wire:confirm="Reactivate this gym? Owner/staff/members will regain access." class="pf-btn-primary w-full">
+                    <button type="button" x-on:click="$store.confirmModal.show({ message: 'Reactivate this gym? Owner/staff/members will regain access.', confirmLabel: 'Reactivate', onConfirm: () => $wire.activate() })" class="pf-btn-primary w-full">
                         Reactivate Gym
                     </button>
                 @else
                     <div class="space-y-2">
                         <input type="text" wire:model="suspend_reason" placeholder="Reason for suspension…" class="pf-input">
                         @error('suspend_reason') <p class="pf-error">{{ $message }}</p> @enderror
-                        <button wire:click="suspend" wire:confirm="Suspend this gym? Owner/staff/members will be locked out immediately." class="pf-btn-danger w-full">
+                        <button type="button" x-on:click="$store.confirmModal.show({ message: 'Suspend this gym? Owner/staff/members will be locked out immediately.', danger: true, confirmLabel: 'Suspend', onConfirm: () => $wire.suspend() })" class="pf-btn-danger w-full">
                             Suspend Gym
                         </button>
                     </div>

@@ -10,26 +10,45 @@ export default {
     theme: {
         extend: {
             colors: {
-                ink: { DEFAULT: '#101826', 2: '#182236' },
-                chalk: { DEFAULT: '#F4F5F1', 2: '#E7E8E2' },
-                gold: { DEFAULT: '#D9A441', 2: '#B9862E' },
-                turf: '#2F5D50',
-                tape: '#B23A2E',
-                steel: { DEFAULT: '#5B6472', 2: '#8891A0' },
-                graphite: { DEFAULT: '#F3F7F7', 2: '#FFFFFF', 3: '#EAF1F1' },
-                teal: { DEFAULT: '#0E9488', 2: '#0B786E' },
-                mist: { DEFAULT: '#57636D', 2: '#8B98A1' },
+                // "Pulse" identity — dense dark-mode operator dashboard, shared by
+                // both the fh-* gym app and the pf-* RankSol platform panel (one
+                // unified surface language now, rather than two separate palettes).
+                // Token *names* are kept stable where possible so existing fh-*/pf-*
+                // component classes and ad-hoc utility usage repaint with minimal
+                // file churn; `ink` and `chalk` swap roles (ink = light text,
+                // chalk = dark surface) and `void` is new (the near-black base,
+                // for the handful of spots that used to rely on dark `bg-ink`).
+                void: '#0D0F12',
+                ink: { DEFAULT: '#E7EAEE', 2: '#0D0F12' },
+                chalk: { DEFAULT: '#171B20', 2: '#1A1E23', 3: '#262B31' },
+                gold: { DEFAULT: '#3DD6D0', 2: '#22B0AB', 3: '#7FE9E4' },
+                blue: { DEFAULT: '#5B8DEF', 2: '#3D6FD1' },
+                turf: '#4ADE80',
+                tape: '#FB6B6B',
+                warn: '#F5B94D',
+                'warn-soft': 'rgba(245, 185, 77, 0.12)',
+                steel: { DEFAULT: '#8D96A0', 2: '#565F6A' },
+                graphite: { DEFAULT: '#171B20', 2: '#14171B', 3: '#1A1E23' },
+                teal: { DEFAULT: '#3DD6D0', 2: '#22B0AB', 3: '#1C918C' },
+                mist: { DEFAULT: '#8D96A0', 2: '#565F6A' },
+                'gold-soft': 'rgba(61, 214, 208, 0.14)',
+                'blue-soft': 'rgba(91, 141, 239, 0.14)',
+                'turf-soft': 'rgba(74, 222, 128, 0.12)',
+                'tape-soft': 'rgba(251, 107, 107, 0.12)',
+                'steel-soft': 'rgba(141, 150, 160, 0.1)',
             },
             fontFamily: {
-                display: ['Oswald', 'Arial Narrow', 'sans-serif'],
-                sans: ['"Work Sans"', 'Segoe UI', 'system-ui', 'sans-serif'],
-                mono: ['"IBM Plex Mono"', 'ui-monospace', 'Consolas', 'monospace'],
+                // System-only stack, no webfont downloads.
+                display: ['-apple-system', '"Segoe UI"', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+                sans: ['-apple-system', '"Segoe UI"', 'Roboto', 'Arial', 'sans-serif'],
+                mono: ['ui-monospace', '"Cascadia Mono"', 'Consolas', '"Courier New"', 'monospace'],
             },
             borderRadius: {
-                DEFAULT: '3px',
-                sm: '2px',
-                md: '3px',
-                lg: '4px',
+                // One shared scale: hairline-bordered cards/inputs get the smaller
+                // radius, cards/modals get the larger one. Both surfaces (fh-*/pf-*)
+                // now share it — no more sharp-vs-soft split between the two apps.
+                DEFAULT: '6px',
+                lg: '8px',
             },
             keyframes: {
                 'fade-up': {

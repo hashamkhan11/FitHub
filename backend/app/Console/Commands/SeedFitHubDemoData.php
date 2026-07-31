@@ -1,0 +1,267 @@
+<?php
+
+namespace App\Console\Commands;
+
+use App\Models\Booking;
+use App\Models\Gym;
+use App\Models\GymClass;
+use App\Models\Measurement;
+use App\Models\Member;
+use App\Models\Membership;
+use App\Models\Payment;
+use App\Models\Plan;
+use App\Models\User;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Hash;
+
+/**
+ * One-off demo-data seeder for the "FitHub" gym (admin@fithub.test, gym id 2) so the
+ * mobile app has realistic Pakistani gym data to demo. Not wired into DatabaseSeeder —
+ * run manually with `php artisan demo:seed-fithub`, safe to re-run (guards on names).
+ */
+class SeedFitHubDemoData extends Command
+{
+    protected $signature = 'demo:seed-fithub';
+
+    protected $description = 'Seed realistic Pakistani demo data into the FitHub gym for mobile app demoing';
+
+    public function handle(): void
+    {
+        $gym = Gym::find(2);
+
+        if (! $gym) {
+            $this->error('Gym id 2 (FitHub) not found.');
+
+            return;
+        }
+
+        $this->renameExistingTestAccounts();
+        $members = $this->createMembers($gym);
+        $classes = $this->createUpcomingClasses($gym);
+        $this->createBookings($classes, $members);
+        $this->extendAdminMeasurements();
+
+        $this->info('Demo data seeded for gym #2 (FitHub).');
+    }
+
+    private function renameExistingTestAccounts(): void
+    {
+        User::where('email', 'trainer1@fithub.test')->update(['name' => 'Usman Tariq']);
+        User::where('email', 'staff1@fithub.test')->update(['name' => 'Ayesha Siddiqui']);
+        User::where('email', 'staff2@fithub.test')->update(['name' => 'Bilal Ahmed']);
+        Member::where('email', 'test1@fithub.com')->update(['name' => 'Fatima Noor']);
+        Member::where('email', 'mubarak@gmail.com')->update(['name' => 'Zainab Malik']);
+
+        // Give the admin's own demo member account a trainer, so the Home screen's
+        // "Trainer" badge has something real to show.
+        $trainer = User::where('email', 'trainer1@fithub.test')->first();
+        if ($trainer) {
+            Member::where('email', 'admin@fithub.test')->update(['trainer_id' => $trainer->id]);
+        }
+    }
+
+    /**
+     * @return array<int, Member>
+     */
+    private function createMembers(Gym $gym): array
+    {
+        $roster = [
+            ['Ahmed Raza', '0301'],
+            ['Sana Malik', '0302'],
+            ['Bilal Hussain', '0303'],
+            ['Mahnoor Fatima', '0304'],
+            ['Hamza Sheikh', '0305'],
+            ['Iqra Yousaf', '0306'],
+            ['Waqas Ahmed', '0307'],
+            ['Aiza Khan', '0308'],
+            ['Danish Iqbal', '0309'],
+            ['Rabia Chaudhry', '0310'],
+            ['Faizan Butt', '0311'],
+            ['Hira Aslam', '0312'],
+        ];
+
+        $plans = Plan::where('gym_id', $gym->id)->get()->keyBy('name');
+        $basic = $plans->get('Basic');
+        $special = $plans->get('Special Plan');
+
+        $created = [];
+
+        foreach ($roster as $i => [$name, $prefix]) {
+            $email = strtolower(str_replace(' ', '.', $name)).'@example.pk';
+
+            $member = Member::firstOrCreate(
+                ['email' => $email],
+                [
+                    'gym_id' => $gym->id,
+                    'name' => $name,
+                    'phone' => $prefix.'-'.str_pad((string) random_int(1000000, 9999999), 7, '0'),
+                    'password' => Hash::make('password'),
+                    'join_date' => now()->subDays(60 - $i * 4)->toDateString(),
+                ]
+            );
+
+            if (! $member->wasRecentlyCreated) {
+                $created[] = $member;
+
+                continue;
+            }
+
+            $plan = $i % 3 === 0 ? $special : $basic;
+            $startDate = now()->subDays(60 - $i * 4);
+            $endDate = $startDate->copy()->addDays($plan->duration_days);
+
+            // A couple of intentionally lapsed / partially-paid memberships so the
+            // roster doesn't read as an unrealistic 100%-paid, 100%-active gym.
+            $paymentStatus = match (true) {
+                $i === 2 => 'partial',
+                $i === 5 => 'pending',
+                default => 'paid',
+            };
+
+            if ($i === 8) {
+                $endDate = now()->subDays(5); // lapsed membership
+            }
+
+            $membership = Membership::create([
+                'member_id' => $member->id,
+                'plan_id' => $plan->id,
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
+                'payment_status' => $paymentStatus,
+                'price_paid' => $plan->price,
+            ]);
+
+            $amountPaid = match ($paymentStatus) {
+                'paid' => $plan->price,
+                'partial' => round($plan->price * 0.5, 2),
+                default => 0,
+            };
+
+            if ($amountPaid > 0) {
+                Payment::create([
+                    'gym_id' => $gym->id,
+                    'membership_id' => $membership->id,
+                    'amount' => $amountPaid,
+                    'method' => 'cash',
+                    'paid_at' => $startDate->toDateString(),
+                ]);
+            }
+
+            $created[] = $member;
+        }
+
+        return $created;
+    }
+
+    /**
+     * @return array<int, GymClass>
+     */
+    private function createUpcomingClasses(Gym $gym): array
+    {
+        $schedule = [
+            ['Subah Fitness Bootcamp', 'Usman Tariq', 1, 7, 15],
+            ['Zumba Dance Blast', 'Ayesha Siddiqui', 2, 18, 12],
+            ['Iron Circuit Strength', 'Bilal Ahmed', 3, 7, 10],
+            ['Evening Yoga & Recovery', 'Sana Malik', 3, 19, 4],
+            ['Boxing Fundamentals', 'Ali Raza', 4, 8, 10],
+            ['Subah Fitness Bootcamp', 'Usman Tariq', 5, 7, 15],
+            ['Spin & Burn', 'Hamza Sheikh', 6, 17, 10],
+            ['Zumba Dance Blast', 'Ayesha Siddiqui', 8, 18, 12],
+        ];
+
+        $classes = [];
+
+        foreach ($schedule as [$name, $instructor, $daysFromNow, $hour, $capacity]) {
+            $startTime = now()->addDays($daysFromNow)->setTime($hour, 0);
+
+            $classes[] = GymClass::firstOrCreate(
+                [
+                    'gym_id' => $gym->id,
+                    'name' => $name,
+                    'start_time' => $startTime,
+                ],
+                [
+                    'instructor_name' => $instructor,
+                    'duration_minutes' => 60,
+                    'capacity' => $capacity,
+                    'is_active' => true,
+                ]
+            );
+        }
+
+        return $classes;
+    }
+
+    /**
+     * @param  array<int, GymClass>  $classes
+     * @param  array<int, Member>  $members
+     */
+    private function createBookings(array $classes, array $members): void
+    {
+        $admin = Member::where('email', 'admin@fithub.test')->first();
+
+        // A real member is only ever booked into a handful of upcoming classes, not
+        // every single one — index 0 (soonest) and 1 book normally, index 3 (the
+        // small "Evening Yoga & Recovery" class) is deliberately filled to capacity
+        // first so the admin's own booking demonstrates the waitlist state.
+        $adminBooksIndexes = [0, 1, 3];
+
+        foreach ($classes as $index => $class) {
+            $alreadySeeded = $class->bookings()->exists();
+
+            if (! $alreadySeeded) {
+                $toBook = $members;
+                shuffle($toBook);
+                $inAdminSlot = in_array($index, $adminBooksIndexes, true);
+                $fillCount = $inAdminSlot
+                    ? min(count($toBook), $class->capacity) // fill fully so admin waitlists where relevant
+                    : min(count($toBook), max(1, $class->capacity - 2));
+
+                foreach (array_slice($toBook, 0, $fillCount) as $member) {
+                    try {
+                        $class->book($member);
+                    } catch (\DomainException) {
+                        // already booked elsewhere at the same slot — skip
+                    }
+                }
+            }
+
+            if ($admin && in_array($index, $adminBooksIndexes, true)) {
+                try {
+                    $class->book($admin);
+                } catch (\DomainException) {
+                    // admin already has a booking for this class
+                }
+            }
+        }
+    }
+
+    private function extendAdminMeasurements(): void
+    {
+        $admin = Member::where('email', 'admin@fithub.test')->first();
+
+        if (! $admin) {
+            return;
+        }
+
+        $trend = [
+            [20, 88.0, 24.0],
+            [10, 86.5, 23.0],
+            [1, 85.0, 21.5],
+        ];
+
+        foreach ($trend as [$daysAgo, $weight, $bodyFat]) {
+            Measurement::firstOrCreate(
+                [
+                    'member_id' => $admin->id,
+                    'recorded_at' => now()->subDays($daysAgo)->toDateString(),
+                ],
+                [
+                    'gym_id' => $admin->gym_id,
+                    'weight_kg' => $weight,
+                    'body_fat_percentage' => $bodyFat,
+                ]
+            );
+        }
+    }
+}

@@ -52,14 +52,16 @@ Make sure the backend is running with `php artisan serve --host=0.0.0.0 --port=8
 
 ### 4. Run
 
+The app defaults to **HTTPS** (fail-safe for production). Local dev against Laragon/Apache is HTTP-only, so pass the scheme override explicitly:
+
 ```bash
-flutter run
+flutter run --dart-define=API_SCHEME=http
 ```
 
 Or build a debug APK to install manually:
 
 ```bash
-flutter build apk --debug
+flutter build apk --debug --dart-define=API_SCHEME=http
 ```
 
 The APK is output to `build/app/outputs/flutter-apk/app-debug.apk`.

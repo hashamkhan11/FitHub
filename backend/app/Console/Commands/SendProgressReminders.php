@@ -31,7 +31,8 @@ class SendProgressReminders extends Command
                 ->withNotification(Notification::create(
                     'Log your progress',
                     'It has been a week — log your latest measurements to track your progress.'
-                ));
+                ))
+                ->withData(['type' => 'progress']);
 
             try {
                 $messaging->send($message);

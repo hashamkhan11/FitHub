@@ -14,7 +14,9 @@
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^4.3",
+        "sentry/sentry-laravel": "^4.27",
         "simplesoftwareio/simple-qrcode": "^4.2",
+        "spatie/laravel-backup": "^8.0",
         "twilio/sdk": "^8.11"
     },
     "require-dev": {

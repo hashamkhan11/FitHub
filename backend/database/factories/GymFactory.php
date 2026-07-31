@@ -16,6 +16,7 @@ class GymFactory extends Factory
             'email' => fake()->unique()->companyEmail(),
             'phone' => fake()->phoneNumber(),
             'address' => fake()->address(),
+            'billing_cycle' => 'monthly',
         ];
     }
 }

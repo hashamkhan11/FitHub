@@ -53,6 +53,7 @@ class SendRenewalReminders extends Command
                         CloudMessage::new()
                             ->withToken($member->fcm_token)
                             ->withNotification(Notification::create('Your membership is expiring soon', $expiryText))
+                            ->withData(['type' => 'renewal'])
                     );
                 } catch (\Throwable $e) {
                     $this->error("Failed to push renewal reminder for membership #{$membership->id}: {$e->getMessage()}");

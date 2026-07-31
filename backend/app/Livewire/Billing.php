@@ -10,6 +10,8 @@ use Livewire\Component;
 #[Layout('layouts.app')]
 class Billing extends Component
 {
+    public ?string $checkoutClientSecret = null;
+
     public function mount(): void
     {
         Gate::authorize('manage-billing');
@@ -23,31 +25,44 @@ class Billing extends Component
             'gym' => $gym,
             'subscription' => $gym->subscription('default'),
             'plans' => SubscriptionPlan::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get(),
+            'stripeKey' => config('cashier.key'),
+            'invoices' => $gym->invoices(),
         ]);
     }
 
     public function subscribe(int $planId, string $cycle): void
     {
+        Gate::authorize('manage-billing');
+
+        if (! auth()->user()->hasVerifiedEmail()) {
+            $this->addError('subscribe', 'Please verify your email address before subscribing to a plan.');
+
+            return;
+        }
+
         $gym = auth()->user()->gym;
         $plan = SubscriptionPlan::findOrFail($planId);
 
         $priceId = $cycle === 'yearly' ? $plan->stripe_price_id_yearly : $plan->stripe_price_id_monthly;
 
         if (! $priceId) {
-            $this->addError('subscribe', 'This plan has not been synced to Stripe yet. Contact RankSol support.');
+            $this->addError('subscribe', 'This plan has not been synced to Stripe yet. Contact '.config('app.support_email').'.');
 
             return;
         }
 
         try {
+            // Embedded UI mode keeps the customer on this page (inside our own layout)
+            // instead of redirecting away to a checkout.stripe.com page. Cashier only
+            // redirects once at the very end, via return_url, after payment completes.
             $checkout = $gym->newSubscription('default', $priceId)->checkout([
-                'success_url' => route('billing').'?checkout=success',
-                'cancel_url' => route('billing').'?checkout=cancelled',
+                'ui_mode' => 'embedded',
+                'return_url' => route('billing').'?checkout=success',
             ]);
 
             $gym->update(['subscription_plan_id' => $plan->id]);
 
-            $this->redirect($checkout->asStripeCheckoutSession()->url);
+            $this->checkoutClientSecret = $checkout->asStripeCheckoutSession()->client_secret;
         } catch (\Throwable $e) {
             $this->addError('subscribe', "Could not start checkout: {$e->getMessage()}");
         }
@@ -55,6 +70,8 @@ class Billing extends Component
 
     public function manage(): void
     {
+        Gate::authorize('manage-billing');
+
         $gym = auth()->user()->gym;
 
         try {
