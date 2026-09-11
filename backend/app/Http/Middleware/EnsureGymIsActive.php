@@ -13,7 +13,7 @@ class EnsureGymIsActive
      * Blocks access for anyone in a gym that RankSol has suspended.
      * Platform admins are not affected.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {

@@ -1,5 +1,9 @@
 <?php
 
+use App\Models\Member;
+use App\Models\PlatformAdmin;
+use App\Models\User;
+
 return [
 
     /*
@@ -72,17 +76,17 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => env('AUTH_MODEL', User::class),
         ],
 
         'members' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Member::class,
+            'model' => Member::class,
         ],
 
         'platform_admins' => [
             'driver' => 'eloquent',
-            'model' => App\Models\PlatformAdmin::class,
+            'model' => PlatformAdmin::class,
         ],
 
         // 'users' => [

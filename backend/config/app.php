@@ -141,7 +141,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Shown on the marketing site and used for the floating WhatsApp button.
-    | Store it in E.164 format (e.g. +923156340085) — that's what wa.me links need.
+    | Store it in E.164 format (e.g. +923001234567) — that's what wa.me links need.
     |
     */
 

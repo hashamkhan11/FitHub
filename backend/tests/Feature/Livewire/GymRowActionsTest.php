@@ -5,7 +5,6 @@ namespace Tests\Feature\Livewire;
 use App\Livewire\Platform\Gyms;
 use App\Models\Gym;
 use App\Models\PlatformAdmin;
-use App\Models\PlatformActivityLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;

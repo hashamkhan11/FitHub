@@ -15,8 +15,7 @@ class PaymentFailedMail extends Mailable
 
     public function __construct(
         public Gym $gym,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

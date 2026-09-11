@@ -14,8 +14,7 @@ class PasswordChangedMail extends Mailable
 
     public function __construct(
         public string $panelLabel,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

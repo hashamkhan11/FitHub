@@ -15,8 +15,7 @@ class PasswordResetLinkMail extends Mailable
     public function __construct(
         public string $resetUrl,
         public string $panelLabel,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

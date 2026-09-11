@@ -9,10 +9,11 @@ use App\Models\Gym;
 use App\Models\PlatformActivityLog;
 use Illuminate\Support\Facades\Mail;
 use Laravel\Cashier\Http\Controllers\WebhookController as CashierWebhookController;
+use Symfony\Component\HttpFoundation\Response;
 
 class StripeWebhookController extends CashierWebhookController
 {
-    protected function handleCustomerSubscriptionUpdated(array $payload): \Symfony\Component\HttpFoundation\Response
+    protected function handleCustomerSubscriptionUpdated(array $payload): Response
     {
         $response = parent::handleCustomerSubscriptionUpdated($payload);
 
@@ -21,7 +22,7 @@ class StripeWebhookController extends CashierWebhookController
         return $response;
     }
 
-    protected function handleCustomerSubscriptionDeleted(array $payload): \Symfony\Component\HttpFoundation\Response
+    protected function handleCustomerSubscriptionDeleted(array $payload): Response
     {
         $response = parent::handleCustomerSubscriptionDeleted($payload);
 
@@ -37,7 +38,7 @@ class StripeWebhookController extends CashierWebhookController
     /**
      * Fires as soon as a renewal payment fails, so we can warn the owner early.
      */
-    protected function handleInvoicePaymentFailed(array $payload): \Symfony\Component\HttpFoundation\Response
+    protected function handleInvoicePaymentFailed(array $payload): Response
     {
         $stripeCustomerId = $payload['data']['object']['customer'] ?? null;
         $gym = $stripeCustomerId ? Gym::where('stripe_id', $stripeCustomerId)->first() : null;

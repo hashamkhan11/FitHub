@@ -5,7 +5,7 @@ namespace Tests\Feature\Auth;
 use App\Models\Gym;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
@@ -60,7 +60,7 @@ class EmailVerificationTest extends TestCase
             ->post('/email/verification-notification')
             ->assertRedirect();
 
-        Notification::assertSentTo($owner, \Illuminate\Auth\Notifications\VerifyEmail::class);
+        Notification::assertSentTo($owner, VerifyEmail::class);
     }
 
     public function test_already_verified_owner_resend_redirects_to_dashboard(): void

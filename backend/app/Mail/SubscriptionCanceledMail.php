@@ -15,8 +15,7 @@ class SubscriptionCanceledMail extends Mailable
 
     public function __construct(
         public Gym $gym,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {

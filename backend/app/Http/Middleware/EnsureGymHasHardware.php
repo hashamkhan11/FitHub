@@ -11,7 +11,7 @@ class EnsureGymHasHardware
     /**
      * Blocks lock/fingerprint features for gyms without the hardware add-on plan.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {

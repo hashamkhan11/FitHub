@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\Attendance;
-use App\Models\Booking;
 use App\Models\GymClass;
 use App\Models\Membership;
 use Illuminate\Support\Carbon;
@@ -17,7 +16,9 @@ class Insight extends Component
 {
     // Each chart moves through months on its own, starting at the current month.
     public string $checkInsMonth;
+
     public string $peakHoursMonth;
+
     public string $revenueMonth;
 
     public function mount(): void

@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Measurement extends Model
 {
-    use HasFactory;
     use BelongsToGym;
+    use HasFactory;
 
     protected $fillable = [
         'gym_id',

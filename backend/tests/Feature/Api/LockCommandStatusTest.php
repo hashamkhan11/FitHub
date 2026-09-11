@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api;
 
 use App\Models\Gym;
+use App\Models\LockCommand;
 use App\Models\LockDevice;
 use App\Models\Member;
 use App\Models\SubscriptionPlan;
@@ -14,7 +15,7 @@ class LockCommandStatusTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function createCommand(Gym $gym, Member $requester): \App\Models\LockCommand
+    private function createCommand(Gym $gym, Member $requester): LockCommand
     {
         [$device] = LockDevice::issueToken($gym->id, 'Front Door');
 

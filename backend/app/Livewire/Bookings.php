@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\ActivityLog;
-use App\Models\Booking;
 use App\Models\GymClass;
 use App\Models\Member;
 use App\Services\PushNotificationService;
@@ -71,6 +70,7 @@ class Bookings extends Component
             $booking = $class->book($member);
         } catch (\DomainException $e) {
             $this->addError('memberId', $e->getMessage());
+
             return;
         }
 

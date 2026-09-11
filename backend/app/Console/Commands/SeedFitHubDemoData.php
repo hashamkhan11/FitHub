@@ -51,10 +51,10 @@ class SeedFitHubDemoData extends Command
         User::where('email', 'staff1@fithub.test')->update(['name' => 'Ayesha Siddiqui']);
         User::where('email', 'staff2@fithub.test')->update(['name' => 'Bilal Ahmed']);
         Member::where('email', 'test1@fithub.com')->update(['name' => 'Fatima Noor']);
-        Member::where('email', 'mubarak@gmail.com')->update(['name' => 'Zainab Malik']);
+        Member::where('email', 'test2@fithub.test')->update(['name' => 'Zainab Malik']);
 
         $this->assignPhoto(Member::where('email', 'test1@fithub.com')->first(), 'women', 28);
-        $this->assignPhoto(Member::where('email', 'mubarak@gmail.com')->first(), 'women', 71);
+        $this->assignPhoto(Member::where('email', 'test2@fithub.test')->first(), 'women', 71);
 
         // Give the admin's demo member a trainer so the Home screen shows one.
         $trainer = User::where('email', 'trainer1@fithub.test')->first();

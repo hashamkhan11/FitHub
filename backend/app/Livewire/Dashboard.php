@@ -7,6 +7,7 @@ use App\Models\Member;
 use App\Models\Membership;
 use App\Models\Payment;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -118,7 +119,7 @@ class Dashboard extends Component
     }
 
     // Counts only members currently active on each plan, not revenue totals.
-    private function membersByPlan(): \Illuminate\Support\Collection
+    private function membersByPlan(): Collection
     {
         return Member::query()
             ->with('latestMembership.plan')
