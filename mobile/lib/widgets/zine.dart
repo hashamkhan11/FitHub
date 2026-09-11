@@ -253,6 +253,7 @@ class _PressScaleState extends State<PressScale> {
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTapDown: (_) => _setPressed(true),
       onTapCancel: () => _setPressed(false),
       onTapUp: (_) => _setPressed(false),

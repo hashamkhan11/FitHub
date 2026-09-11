@@ -135,4 +135,16 @@ return [
 
     'support_email' => env('SUPPORT_EMAIL', 'support@example.com'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Support phone / WhatsApp number
+    |--------------------------------------------------------------------------
+    |
+    | Shown on the marketing site and used for the floating WhatsApp button.
+    | Store it in E.164 format (e.g. +923156340085) — that's what wa.me links need.
+    |
+    */
+
+    'support_phone' => env('SUPPORT_PHONE', '+10000000000'),
+
 ];

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ClassController;
 use App\Http\Controllers\Api\FingerprintController;
 use App\Http\Controllers\Api\LockController;
 use App\Http\Controllers\Api\MemberController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PasswordResetController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,11 @@ Route::middleware(['auth:sanctum', 'gym.active'])->group(function () {
     Route::get('/member/payments', [MemberController::class, 'payments']);
     Route::post('/member/photo', [MemberController::class, 'updatePhoto']);
     Route::post('/member/change-password', [MemberController::class, 'changePassword']);
+
+    Route::get('/member/notifications', [NotificationController::class, 'index']);
+    Route::post('/member/notifications/read-all', [NotificationController::class, 'markAllRead']);
+    Route::delete('/member/notifications/{id}', [NotificationController::class, 'destroy']);
+    Route::delete('/member/notifications', [NotificationController::class, 'destroyAll']);
 
     Route::get('/classes', [ClassController::class, 'index']);
     Route::post('/classes/{class}/book', [ClassController::class, 'book']);

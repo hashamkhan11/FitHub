@@ -126,7 +126,7 @@ class _LockScreenState extends ConsumerState<LockScreen> {
                         Text(
                           isOnline ? 'Online' : 'Offline',
                           style: AppTheme.mono(
-                            color: isOnline ? AppColors.turf : AppColors.steel2,
+                            color: isOnline ? AppColors.turf : AppColors.steel,
                             fontSize: 13,
                           ),
                         ),

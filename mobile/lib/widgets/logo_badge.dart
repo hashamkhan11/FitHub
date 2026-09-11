@@ -17,7 +17,7 @@ class LogoBadge extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        borderRadius: circular ? null : BorderRadius.circular(6),
+        borderRadius: circular ? null : BorderRadius.circular(AppTheme.radiusSm),
         shape: circular ? BoxShape.circle : BoxShape.rectangle,
         gradient: const LinearGradient(
           begin: Alignment.topLeft,

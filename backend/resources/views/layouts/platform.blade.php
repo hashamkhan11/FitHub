@@ -6,6 +6,10 @@
 
         <title>{{ $title ?? 'RankSol Platform' }}</title>
 
+        @if (file_exists(public_path('images/branding/logo.png')))
+            <link rel="icon" type="image/png" href="{{ asset('images/branding/logo.png') }}">
+        @endif
+
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
         @livewireStyles
@@ -38,11 +42,9 @@
 
         {{-- Desktop sidebar --}}
         <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-4 lg:left-4 lg:rounded-xl bg-chalk/80 backdrop-blur-xl border border-chalk-3 shadow-fh-card z-20">
-            <div class="flex items-center gap-3 px-6 h-16 border-b border-chalk-3 shrink-0">
-                <span class="flex items-center gap-2 font-mono font-semibold text-ink tracking-wide text-sm">
-                    <span class="w-1.5 h-1.5 rounded-full bg-teal shadow-[0_0_8px_theme(colors.teal.DEFAULT)]" aria-hidden="true"></span>
-                    RANKSOL
-                </span>
+            <div class="flex items-center gap-2.5 px-6 h-16 border-b border-chalk-3 shrink-0">
+                @include('partials.logo', ['class' => 'w-6 h-6 shrink-0'])
+                <span class="font-mono font-semibold text-ink tracking-wide text-sm">RANKSOL</span>
             </div>
 
             <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-0.5">
@@ -82,7 +84,7 @@
         <div class="lg:hidden sticky top-0 z-20 bg-void border-b border-chalk-3">
             <div class="px-4 h-14 flex items-center justify-between">
                 <span class="flex items-center gap-2 font-mono font-semibold text-ink tracking-wide text-sm">
-                    <span class="w-1.5 h-1.5 rounded-full bg-teal shadow-[0_0_8px_theme(colors.teal.DEFAULT)]" aria-hidden="true"></span>
+                    @include('partials.logo', ['class' => 'w-5 h-5 shrink-0'])
                     RANKSOL
                 </span>
                 <form method="POST" action="/ranksol/logout">

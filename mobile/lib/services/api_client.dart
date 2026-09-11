@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -53,10 +54,17 @@ class ApiClient {
       };
 
   /// Runs an HTTP call and turns network/login errors into clear exceptions.
-  Future<http.Response> _send(Future<http.Response> Function() request) async {
+  /// Always bounded by a timeout so a stalled connection can never leave the
+  /// UI stuck showing a loading spinner forever.
+  Future<http.Response> _send(
+    Future<http.Response> Function() request, {
+    Duration timeout = const Duration(seconds: 15),
+  }) async {
     late final http.Response response;
     try {
-      response = await request();
+      response = await request().timeout(timeout);
+    } on TimeoutException {
+      throw const OfflineException();
     } on SocketException {
       throw const OfflineException();
     } on http.ClientException {
@@ -275,7 +283,7 @@ class ApiClient {
 
       final streamed = await _client.send(request);
       return http.Response.fromStream(streamed);
-    });
+    }, timeout: const Duration(seconds: 45));
 
     if (response.statusCode != 200) {
       throw Exception(_extractError(response.body));
@@ -350,9 +358,39 @@ class ApiClient {
     }
   }
 
+  Future<Map<String, dynamic>> fetchNotifications() async {
+    final response = await _send(() => _client.get(Uri.parse('$baseUrl/member/notifications'), headers: _headers));
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load notifications.');
+    }
+
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<void> markNotificationsRead() async {
+    await _send(() => _client.post(Uri.parse('$baseUrl/member/notifications/read-all'), headers: _headers));
+  }
+
+  Future<void> deleteNotification(int id) async {
+    final response = await _send(() => _client.delete(Uri.parse('$baseUrl/member/notifications/$id'), headers: _headers));
+
+    if (response.statusCode != 200) {
+      throw Exception(_extractError(response.body));
+    }
+  }
+
+  Future<void> deleteAllNotifications() async {
+    final response = await _send(() => _client.delete(Uri.parse('$baseUrl/member/notifications'), headers: _headers));
+
+    if (response.statusCode != 200) {
+      throw Exception(_extractError(response.body));
+    }
+  }
+
   Future<void> logout() async {
     try {
-      await _client.post(Uri.parse('$baseUrl/logout'), headers: _headers);
+      await _client.post(Uri.parse('$baseUrl/logout'), headers: _headers).timeout(const Duration(seconds: 15));
     } catch (_) {
       // Just try once — don't block logout if the server call fails.
     }

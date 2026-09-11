@@ -19,9 +19,11 @@ import 'progress_screen.dart' show measurementsProvider;
 Future<void> _showHeightDialog(BuildContext context, WidgetRef ref, {double? currentHeightCm}) async {
   final controller = TextEditingController(text: currentHeightCm?.toStringAsFixed(0) ?? '');
   String? error;
+  var saving = false;
 
   await showDialog<void>(
     context: context,
+    barrierDismissible: false,
     builder: (dialogContext) => StatefulBuilder(
       builder: (dialogContext, setState) {
         Future<void> save() async {
@@ -31,13 +33,23 @@ Future<void> _showHeightDialog(BuildContext context, WidgetRef ref, {double? cur
             return;
           }
 
+          setState(() {
+            saving = true;
+            error = null;
+          });
+
           try {
             final client = ref.read(apiClientProvider);
             await client.updateProfile(heightCm: parsed);
             ref.invalidate(memberProfileProvider);
             if (dialogContext.mounted) Navigator.of(dialogContext).pop();
           } catch (e) {
-            setState(() => error = e.toString().replaceFirst('Exception: ', ''));
+            if (dialogContext.mounted) {
+              setState(() {
+                saving = false;
+                error = e.toString().replaceFirst('Exception: ', '');
+              });
+            }
           }
         }
 
@@ -50,6 +62,7 @@ Future<void> _showHeightDialog(BuildContext context, WidgetRef ref, {double? cur
               TextField(
                 controller: controller,
                 autofocus: true,
+                enabled: !saving,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(labelText: 'Height (cm)'),
               ),
@@ -60,8 +73,20 @@ Future<void> _showHeightDialog(BuildContext context, WidgetRef ref, {double? cur
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('CANCEL')),
-            FilledButton(onPressed: save, child: const Text('SAVE')),
+            TextButton(
+              onPressed: saving ? null : () => Navigator.of(dialogContext).pop(),
+              child: const Text('CANCEL'),
+            ),
+            FilledButton(
+              onPressed: saving ? null : save,
+              child: saving
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.voidBg),
+                    )
+                  : const Text('SAVE'),
+            ),
           ],
         );
       },
@@ -184,10 +209,10 @@ class _BmiBodyState extends ConsumerState<_BmiBody> {
               children: [
                 Text(
                   'Height: ${widget.heightCm.toStringAsFixed(0)} cm',
-                  style: AppTheme.mono(fontSize: 13, color: AppColors.steel2),
+                  style: AppTheme.mono(fontSize: 13, color: AppColors.steel),
                 ),
                 const SizedBox(width: 6),
-                const Icon(Icons.edit, size: 14, color: AppColors.steel2),
+                const Icon(Icons.edit, size: 14, color: AppColors.steel),
               ],
             ),
           ),
@@ -272,7 +297,7 @@ class _SourceOption extends StatelessWidget {
             ),
             if (subtitle != null) ...[
               const SizedBox(height: 3),
-              Text(subtitle!, style: AppTheme.mono(fontSize: 11, color: AppColors.steel2)),
+              Text(subtitle!, style: AppTheme.mono(fontSize: 11, color: AppColors.steel)),
             ],
           ],
         ),
@@ -300,7 +325,7 @@ class _BmiResultCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('YOUR BMI', style: AppTheme.display(fontSize: 11, color: AppColors.steel2, letterSpacing: 1.5)),
+              Text('YOUR BMI', style: AppTheme.display(fontSize: 11, color: AppColors.steel, letterSpacing: 1.5)),
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -324,7 +349,7 @@ class _BmiResultCard extends StatelessWidget {
         const SizedBox(height: 14),
         Text(
           'BMI is a general screening tool and doesn\'t account for muscle mass, frame size, or body composition.',
-          style: AppTheme.mono(fontSize: 11, color: AppColors.steel2),
+          style: AppTheme.mono(fontSize: 11, color: AppColors.steel),
         ),
       ],
     );

@@ -3,3 +3,6 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+
+# Serial monitor captures from debugging - not part of the firmware
+*_log.txt

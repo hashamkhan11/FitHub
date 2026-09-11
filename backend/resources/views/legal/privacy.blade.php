@@ -18,6 +18,8 @@
         <li>A push-notification token, if you enable notifications on the mobile app.</li>
         <li>Door-lock unlock/lock requests, where your Gym uses FitHub-connected locks — including which
             device, when, and the outcome.</li>
+        <li>A fingerprint template, where your Gym uses a FitHub fingerprint scanner for attendance or
+            entry — captured on the scanner hardware and used only to match you to your account.</li>
     </ul>
     <p>For Gym staff, we collect the account details needed to operate the dashboard — name, email, and role.</p>
 

@@ -168,7 +168,7 @@ class _MembershipSummary extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('MEMBERSHIP', style: AppTheme.display(fontSize: 11, color: AppColors.steel2, letterSpacing: 1.5)),
+              Text('MEMBERSHIP', style: AppTheme.display(fontSize: 11, color: AppColors.steel, letterSpacing: 1.5)),
               const SizedBox(height: 8),
               _row('Plan', plan['name'] as String),
               _row('Ends', membership['end_date'].toString().split('T').first),
@@ -188,7 +188,7 @@ class _MembershipSummary extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTheme.mono(fontSize: 12, color: AppColors.steel2)),
+          Text(label, style: AppTheme.mono(fontSize: 12, color: AppColors.steel)),
           Text(value, style: AppTheme.mono(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.ink)),
         ],
       ),

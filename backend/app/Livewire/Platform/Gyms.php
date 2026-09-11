@@ -4,6 +4,7 @@ namespace App\Livewire\Platform;
 
 use App\Models\Gym;
 use App\Models\PlatformActivityLog;
+use App\Models\User;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -71,6 +72,13 @@ class Gyms extends Component
 
         // Log this before delete() — can't log a reference to an already-deleted gym.
         PlatformActivityLog::record('gym.deleted', "Permanently deleted gym {$name} and all its data.", $gym);
+
+        // users.gym_id is nullOnDelete (every other gym-scoped table cascades),
+        // so owner/staff accounts must be removed explicitly here — otherwise
+        // they're orphaned with a null gym_id: still able to log in and crash
+        // on any gym-scoped page, and still holding the email so it can't be
+        // used to sign up again.
+        User::where('gym_id', $gymId)->delete();
 
         $gym->delete();
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -10,7 +12,12 @@ class AuthState {
   final String? token;
   final Map<String, dynamic>? member;
 
-  const AuthState({this.token, this.member});
+  /// True until the saved-session check on cold start has finished. The
+  /// splash screen watches this so it never briefly shows the login screen
+  /// to an already-logged-in member.
+  final bool restoring;
+
+  const AuthState({this.token, this.member, this.restoring = true});
 
   bool get isLoggedIn => token != null;
 }
@@ -25,8 +32,10 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> _restoreSession() async {
     final token = await _secureStorage.read(key: 'token');
     if (token != null) {
-      state = AuthState(token: token);
-      await registerPushToken(ApiClient(token: token));
+      state = AuthState(token: token, restoring: false);
+      unawaited(registerPushToken(ApiClient(token: token)));
+    } else {
+      state = const AuthState(restoring: false);
     }
   }
 
@@ -39,9 +48,10 @@ class AuthNotifier extends Notifier<AuthState> {
     state = AuthState(
       token: data['token'] as String,
       member: data['member'] as Map<String, dynamic>,
+      restoring: false,
     );
 
-    await registerPushToken(ApiClient(token: data['token'] as String));
+    unawaited(registerPushToken(ApiClient(token: data['token'] as String)));
   }
 
   Future<void> logout() async {
@@ -64,7 +74,7 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<void> _clearLocalSession() async {
     await _secureStorage.delete(key: 'token');
-    state = const AuthState();
+    state = const AuthState(restoring: false);
   }
 }
 

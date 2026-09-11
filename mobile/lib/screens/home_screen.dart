@@ -8,6 +8,7 @@ import '../widgets/zine.dart';
 import 'attendance_screen.dart' show attendanceProvider;
 import 'classes_screen.dart' show classesProvider;
 import 'lock_screen.dart' show LockScreen, lockDevicesProvider;
+import 'notifications_screen.dart' show NotificationsScreen, notificationsProvider;
 import 'profile_screen.dart' show memberProfileProvider;
 
 final membershipProvider = FutureProvider.autoDispose((ref) async {
@@ -82,11 +83,12 @@ class HomeScreen extends ConsumerWidget {
             ref.invalidate(attendanceProvider);
             ref.invalidate(memberProfileProvider);
             ref.invalidate(lockDevicesProvider);
+            ref.invalidate(notificationsProvider);
           },
           color: AppColors.gold,
           backgroundColor: AppColors.paper2,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 14),
             children: [
               Reveal(
                 index: 0,
@@ -96,22 +98,22 @@ class HomeScreen extends ConsumerWidget {
                       photoUrl: photoUrl,
                       name: firstName,
                       authToken: client.authToken,
-                      size: 60,
+                      size: 54,
                       borderWidth: 2.5,
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'WELCOME BACK',
-                            style: AppTheme.mono(fontSize: 12, color: AppColors.steel2, letterSpacing: 1.6),
+                            style: AppTheme.mono(fontSize: 11, color: AppColors.steel, letterSpacing: 1.6),
                           ),
-                          const SizedBox(height: 3),
+                          const SizedBox(height: 2),
                           Text(
                             firstName.isEmpty ? 'there' : firstName,
-                            style: AppTheme.display(fontSize: 32, fontWeight: FontWeight.w800),
+                            style: AppTheme.display(fontSize: 27, fontWeight: FontWeight.w800),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -120,16 +122,18 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 8),
                     _NotificationBell(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("You're all caught up — no new notifications.")),
+                      unreadCount: (ref.watch(notificationsProvider).asData?.value['unread_count'] as int?) ?? 0,
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
                         );
+                        ref.invalidate(notificationsProvider);
                       },
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               Reveal(
                 index: 1,
                 child: Column(
@@ -137,9 +141,9 @@ class HomeScreen extends ConsumerWidget {
                     Text(
                       'SCAN TO CHECK IN',
                       textAlign: TextAlign.center,
-                      style: AppTheme.display(fontSize: 12, color: AppColors.steel, letterSpacing: 2),
+                      style: AppTheme.display(fontSize: 11, color: AppColors.steel, letterSpacing: 2),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
                     Center(
                       child: Container(
                         clipBehavior: Clip.antiAlias,
@@ -162,21 +166,11 @@ class HomeScreen extends ConsumerWidget {
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
                               child: Container(
-                                padding: const EdgeInsets.all(10),
+                                padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppTheme.radiusSm)),
-                                child: SvgPicture.network(
-                                  client.qrCodeUrl().toString(),
-                                  headers: {'Authorization': 'Bearer ${client.authToken}'},
-                                  width: 220,
-                                  height: 220,
-                                  placeholderBuilder: (context) => const SizedBox(
-                                    width: 220,
-                                    height: 220,
-                                    child: Center(child: CircularProgressIndicator()),
-                                  ),
-                                ),
+                                child: _QrCode(baseUri: client.qrCodeUrl(), authToken: client.authToken),
                               ),
                             ),
                           ],
@@ -186,17 +180,18 @@ class HomeScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 14),
               Reveal(index: 2, child: const _LockQuickAction()),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Reveal(
                 index: 3,
                 child: MemCard(
+                  padding: const EdgeInsets.all(14),
                   child: membershipAsync.when(
                     data: (data) {
                       final membership = data['membership'] as Map<String, dynamic>?;
                       if (membership == null) {
-                        return Text('No active membership.', style: AppTheme.mono(color: AppColors.steel2));
+                        return Text('No active membership.', style: AppTheme.mono(color: AppColors.steel));
                       }
                       final trainer = data['trainer'] as Map<String, dynamic>?;
                       final plan = membership['plan'] as Map<String, dynamic>;
@@ -212,9 +207,9 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           Text(
                             (plan['name'] as String).toUpperCase(),
-                            style: AppTheme.display(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.gold),
+                            style: AppTheme.display(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.gold),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8),
                           _badgeRow(
                             'Ends',
                             membership['end_date'].toString().split('T').first,
@@ -241,7 +236,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Reveal(
                 index: 4,
                 child: Row(
@@ -264,7 +259,7 @@ class HomeScreen extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: AppTheme.mono(fontSize: 12, color: AppColors.steel2)),
+        Text(label, style: AppTheme.mono(fontSize: 12, color: AppColors.steel)),
         Text(value, style: AppTheme.mono(fontSize: 12, fontWeight: FontWeight.w600, color: valueColor)),
       ],
     );
@@ -284,12 +279,12 @@ class HomeScreen extends ConsumerWidget {
   Widget _statCardShell(String label, Widget content, {Color labelColor = AppColors.steel}) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label, style: AppTheme.display(fontSize: 11, color: labelColor, letterSpacing: 1.2)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             content,
           ],
         ),
@@ -305,7 +300,7 @@ class HomeScreen extends ConsumerWidget {
         if (gymClass == null) {
           return _statCardShell(
             'NEXT CLASS',
-            Text('No upcoming bookings', style: AppTheme.mono(fontSize: 13, color: AppColors.steel2)),
+            Text('No upcoming bookings', style: AppTheme.mono(fontSize: 13, color: AppColors.steel)),
           );
         }
         final startTime = DateTime.parse(gymClass['start_time'] as String).toLocal();
@@ -333,7 +328,7 @@ class HomeScreen extends ConsumerWidget {
         );
       },
       loading: () => _statCardShell('NEXT CLASS', const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))),
-      error: (_, _) => _statCardShell('NEXT CLASS', Text('—', style: AppTheme.mono(color: AppColors.steel2))),
+      error: (_, _) => _statCardShell('NEXT CLASS', Text('—', style: AppTheme.mono(color: AppColors.steel))),
     );
   }
 
@@ -352,11 +347,11 @@ class HomeScreen extends ConsumerWidget {
               style: AppTheme.display(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
-                color: streak > 0 ? AppColors.blueDeep : AppColors.steel2,
+                color: streak > 0 ? AppColors.blueDeep : AppColors.steel,
               ),
             ),
             const SizedBox(width: 6),
-            Text(streak == 1 ? 'day' : 'days', style: AppTheme.mono(fontSize: 13, color: AppColors.steel2)),
+            Text(streak == 1 ? 'day' : 'days', style: AppTheme.mono(fontSize: 13, color: AppColors.steel)),
             const Spacer(),
             PunchDot(filled: streak > 0),
           ],
@@ -366,32 +361,116 @@ class HomeScreen extends ConsumerWidget {
           width: 20,
           child: CircularProgressIndicator(strokeWidth: 2),
         ),
-        error: (_, _) => Text('—', style: AppTheme.mono(color: AppColors.steel2)),
+        error: (_, _) => Text('—', style: AppTheme.mono(color: AppColors.steel)),
+      ),
+    );
+  }
+}
+
+/// Check-in QR code. Falls back to a tap-to-retry message instead of
+/// Flutter's default broken-image icon if the fetch fails (e.g. offline) —
+/// this is the app's primary check-in flow, so it must never look silently
+/// broken. Retries cache-bust the URL so a fresh network fetch is attempted.
+class _QrCode extends StatefulWidget {
+  const _QrCode({required this.baseUri, required this.authToken});
+
+  final Uri baseUri;
+  final String authToken;
+
+  @override
+  State<_QrCode> createState() => _QrCodeState();
+}
+
+class _QrCodeState extends State<_QrCode> {
+  int _attempt = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final uri = _attempt == 0 ? widget.baseUri : widget.baseUri.replace(queryParameters: {'_retry': '$_attempt'});
+
+    return SvgPicture.network(
+      uri.toString(),
+      headers: {'Authorization': 'Bearer ${widget.authToken}'},
+      width: 186,
+      height: 186,
+      placeholderBuilder: (context) => const SizedBox(
+        width: 186,
+        height: 186,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      errorBuilder: (context, error, stackTrace) => SizedBox(
+        width: 186,
+        height: 186,
+        child: InkWell(
+          onTap: () => setState(() => _attempt++),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.refresh, color: AppColors.steel, size: 26),
+              const SizedBox(height: 8),
+              Text(
+                "Couldn't load your code",
+                textAlign: TextAlign.center,
+                style: AppTheme.mono(fontSize: 11, color: AppColors.steel),
+              ),
+              const SizedBox(height: 2),
+              Text('Tap to retry', style: AppTheme.mono(fontSize: 11, color: AppColors.gold)),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
 /// Notification bell icon on the Home header, styled to match the avatar ring.
+/// Shows a small badge with the unread count when there's something new.
 class _NotificationBell extends StatelessWidget {
-  const _NotificationBell({required this.onTap});
+  const _NotificationBell({required this.onTap, required this.unreadCount});
 
   final VoidCallback onTap;
+  final int unreadCount;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      shape: const CircleBorder(side: BorderSide(color: AppColors.ink2, width: 1)),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: const SizedBox(
-          width: 50,
-          height: 50,
-          child: Icon(Icons.notifications_outlined, color: AppColors.ink, size: 23),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(side: BorderSide(color: AppColors.ink2, width: 1)),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: const SizedBox(
+              width: 50,
+              height: 50,
+              child: Icon(Icons.notifications_outlined, color: AppColors.ink, size: 23),
+            ),
+          ),
         ),
-      ),
+        if (unreadCount > 0)
+          Positioned(
+            top: -2,
+            right: -2,
+            child: IgnorePointer(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                constraints: const BoxConstraints(minWidth: 18),
+                decoration: BoxDecoration(
+                  color: AppColors.gold,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: AppColors.voidBg, width: 1.5),
+                ),
+                child: Text(
+                  unreadCount > 9 ? '9+' : '$unreadCount',
+                  textAlign: TextAlign.center,
+                  style: AppTheme.mono(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.voidBg),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -454,6 +533,7 @@ class _LockQuickActionState extends ConsumerState<_LockQuickAction> {
         }
 
         return MemCard(
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -463,7 +543,7 @@ class _LockQuickActionState extends ConsumerState<_LockQuickAction> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('DOOR LOCK', style: AppTheme.display(fontSize: 11, color: AppColors.steel2, letterSpacing: 1.5)),
+                        Text('DOOR LOCK', style: AppTheme.display(fontSize: 11, color: AppColors.steel, letterSpacing: 1.5)),
                         const SizedBox(height: 6),
                         Text(
                           name,
@@ -474,7 +554,7 @@ class _LockQuickActionState extends ConsumerState<_LockQuickAction> {
                         const SizedBox(height: 2),
                         Text(
                           isOnline ? 'Online' : 'Offline',
-                          style: AppTheme.mono(fontSize: 12, color: isOnline ? AppColors.turf : AppColors.steel2),
+                          style: AppTheme.mono(fontSize: 12, color: isOnline ? AppColors.turf : AppColors.steel),
                         ),
                       ],
                     ),

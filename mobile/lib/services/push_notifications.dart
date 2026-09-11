@@ -75,17 +75,23 @@ void _routeToNotificationTab(RemoteMessage message, ProviderContainer container)
 }
 
 /// Skips sending the token again if it hasn't changed since last time.
+/// Best-effort: push setup must never block or break login on devices
+/// without working Google Play Services (getToken() can hang forever there).
 Future<void> registerPushToken(ApiClient client) async {
-  final messaging = FirebaseMessaging.instance;
+  try {
+    final messaging = FirebaseMessaging.instance;
 
-  await messaging.requestPermission();
+    await messaging.requestPermission().timeout(const Duration(seconds: 10));
 
-  final token = await messaging.getToken();
-  if (token == null) return;
+    final token = await messaging.getToken().timeout(const Duration(seconds: 10));
+    if (token == null) return;
 
-  final prefs = await SharedPreferences.getInstance();
-  if (prefs.getString(_lastFcmTokenKey) == token) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getString(_lastFcmTokenKey) == token) return;
 
-  await client.updateFcmToken(token);
-  await prefs.setString(_lastFcmTokenKey, token);
+    await client.updateFcmToken(token);
+    await prefs.setString(_lastFcmTokenKey, token);
+  } catch (_) {
+    // Ignore — the app works fine without push notifications.
+  }
 }

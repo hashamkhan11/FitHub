@@ -8,9 +8,9 @@
 #include <ArduinoJson.h>
 #include <Adafruit_Fingerprint.h>
 
-// --- Relay wiring: DO NOT flip this. VCC->3V3, IN->D2. Confirmed working. ---
-// LOW = unlock, HIGH = locked (this is also the boot-default state).
-#define RELAY_PIN 2
+// --- Relay wiring: DO NOT flip this. New PCB, GPIO25 to relay IN. Confirmed working 2026-08-18 (see relay test sketch). ---
+// HIGH = unlock, LOW = locked (this is also the boot-default state).
+#define RELAY_PIN 25
 #define BOOT_BUTTON_PIN 0   // hold this at boot for 3s to wipe saved config
 #define AP_SSID "FitHub-Lock-Setup"
 
@@ -19,12 +19,14 @@
 #define FINGERPRINT_TX_PIN 17   // ESP32 TX -> sensor RX
 #define FINGERPRINT_BAUD 57600
 const unsigned long UNLOCK_PULSE_MS = 4000; // how long a fingerprint-granted entry stays unlocked
+const unsigned long APP_UNLOCK_PULSE_MS = 2000; // how long an app-triggered unlock stays open before auto-relocking
 
 const unsigned long POLL_INTERVAL_MS = 1000;   // how often we ask the server for commands
 const unsigned long WIFI_CONNECT_TIMEOUT_MS = 20000;
 
 Preferences prefs;
 WebServer setupServer(80);
+WebServer testServer(81); // temporary manual relay test page, bypasses backend polling
 
 HardwareSerial fingerSerial(2);
 Adafruit_Fingerprint finger(&fingerSerial);
@@ -45,6 +47,12 @@ String savedSsid, savedPass, savedServerUrl, savedToken;
 bool configured = false;
 unsigned long lastPollMs = 0;
 unsigned long unlockUntilMs = 0; // 0 = no fingerprint-triggered unlock pending
+
+// Command IDs are auto-increment, so anything <= this has already been acted
+// on. Guards against re-firing the relay if an earlier ack POST silently
+// failed (e.g. a brief WiFi drop) and the server keeps redelivering the same
+// still-"pending" command every poll.
+long lastHandledCommandId = -1;
 
 // ---------- config storage (ESP32 flash, survives reboot) ----------
 
@@ -136,6 +144,43 @@ void handleSetupSave() {
     ESP.restart();
 }
 
+// Alternative to the AP web form: push config over USB serial with
+// "cfg <ssid>|<pass>|<server>|<token>". Useful when a phone can't join the
+// device's own setup AP reliably.
+void checkSerialConfig() {
+    if (!Serial.available()) {
+        return;
+    }
+
+    String line = Serial.readStringUntil('\n');
+    line.trim();
+    if (!line.startsWith("cfg ")) {
+        return;
+    }
+
+    String rest = line.substring(4);
+    int p1 = rest.indexOf('|');
+    int p2 = rest.indexOf('|', p1 + 1);
+    int p3 = rest.indexOf('|', p2 + 1);
+    if (p1 < 0 || p2 < 0 || p3 < 0) {
+        Serial.println("cfg: expected ssid|pass|server|token");
+        return;
+    }
+
+    String ssid = rest.substring(0, p1);
+    String pass = rest.substring(p1 + 1, p2);
+    String server = rest.substring(p2 + 1, p3);
+    String token = rest.substring(p3 + 1);
+    while (server.endsWith("/")) {
+        server.remove(server.length() - 1);
+    }
+
+    saveConfig(ssid, pass, server, token);
+    Serial.println("Config saved via serial. Restarting...");
+    delay(300);
+    ESP.restart();
+}
+
 void startSetupMode() {
     Serial.println("Entering setup mode...");
     WiFi.mode(WIFI_AP);
@@ -144,6 +189,7 @@ void startSetupMode() {
     Serial.print(AP_SSID);
     Serial.print("' then visit http://");
     Serial.println(WiFi.softAPIP());
+    Serial.println("Or send: cfg <ssid>|<pass>|<server>|<token>");
 
     setupServer.on("/", handleSetupRoot);
     setupServer.on("/save", HTTP_POST, handleSetupSave);
@@ -151,6 +197,7 @@ void startSetupMode() {
 
     while (true) {
         setupServer.handleClient();
+        checkSerialConfig();
     }
 }
 
@@ -170,12 +217,34 @@ bool connectWifi() {
 }
 
 void openLock() {
-    digitalWrite(RELAY_PIN, LOW);
+    digitalWrite(RELAY_PIN, HIGH);
     Serial.println("Lock OPEN");
 }
 
+void closeLock();
+
+void handleTestRoot() {
+    testServer.send(200, "text/html",
+        "<html><body style='font-family:Arial;text-align:center;padding-top:60px;background:#111;color:#eee'>"
+        "<h2>FitHub Lock Test</h2>"
+        "<form action='/unlock' method='POST'>"
+        "<button style='font-size:24px;padding:20px 40px;background:#c0392b;color:#fff;border:none;border-radius:8px' type='submit'>Unlock</button>"
+        "</form></body></html>");
+}
+
+void handleTestUnlock() {
+    openLock();
+    testServer.send(200, "text/html",
+        "<html><body style='font-family:Arial;text-align:center;padding-top:60px;background:#111;color:#eee'>"
+        "<h2>Unlocked. Relocking in 1s...</h2>"
+        "<script>setTimeout(function(){location.href='/'},1200)</script>"
+        "</body></html>");
+    delay(1000);
+    closeLock();
+}
+
 void closeLock() {
-    digitalWrite(RELAY_PIN, HIGH);
+    digitalWrite(RELAY_PIN, LOW);
     Serial.println("Lock CLOSED");
 }
 
@@ -268,10 +337,16 @@ void pollServer() {
         if (!err) {
             for (JsonObject cmd : doc["commands"].as<JsonArray>()) {
                 int id = cmd["id"];
+                if (id <= lastHandledCommandId) {
+                    continue; // already acted on this one; its ack must have failed to land
+                }
+                lastHandledCommandId = id;
+
                 String action = cmd["action"].as<String>();
                 Serial.printf("command #%d: %s\n", id, action.c_str());
                 if (action == "open") {
                     openLock();
+                    unlockUntilMs = millis() + APP_UNLOCK_PULSE_MS;
                     ackCommand(id, "completed");
                 } else if (action == "close") {
                     closeLock();
@@ -571,6 +646,28 @@ void handleSerialCommands() {
         delay(300);
         ESP.restart();
         return;
+    } else if (line.startsWith("setwifi ")) {
+        String rest = line.substring(8);
+        int sep = rest.indexOf('|');
+        if (sep < 0) {
+            Serial.println("setwifi: expected ssid|pass");
+            return;
+        }
+        String ssid = rest.substring(0, sep);
+        String pass = rest.substring(sep + 1);
+        saveConfig(ssid, pass, savedServerUrl, savedToken);
+        Serial.println("WiFi updated. Restarting...");
+        delay(300);
+        ESP.restart();
+        return;
+    }
+
+    if (line == "unlock") {
+        openLock();
+        Serial.println("Relocking in 1s...");
+        delay(1000);
+        closeLock();
+        return;
     }
 
     if (line == "status") {
@@ -630,7 +727,7 @@ void setup() {
     delay(200);
 
     pinMode(RELAY_PIN, OUTPUT);
-    digitalWrite(RELAY_PIN, HIGH); // start locked
+    digitalWrite(RELAY_PIN, LOW); // start locked
 
     setupFingerprint();
 
@@ -649,10 +746,18 @@ void setup() {
     Serial.print("Connected. IP: ");
     Serial.println(WiFi.localIP());
     Serial.println("Ready - polling server for lock commands.");
+
+    testServer.on("/", handleTestRoot);
+    testServer.on("/unlock", HTTP_POST, handleTestUnlock);
+    testServer.begin();
+    Serial.print("Manual relay test page: http://");
+    Serial.print(WiFi.localIP());
+    Serial.println(":81/");
 }
 
 void loop() {
     handleSerialCommands();
+    testServer.handleClient();
 
     if (enrollState != ENROLL_NONE) {
         updateEnroll(); // enrollment owns the sensor - don't also run door-entry matching

@@ -34,6 +34,17 @@ export default {
                 'turf-soft': 'rgba(57, 217, 122, 0.12)',
                 'tape-soft': 'rgba(255, 77, 94, 0.12)',
                 'steel-soft': 'rgba(138, 147, 166, 0.1)',
+
+                // Marketing site (public homepage) — repointed onto the same
+                // "Redline" dark tokens as fh-*/pf-* above, so the public site
+                // reads as the same product as the app/dashboard. mk-* class
+                // names kept stable (own component set, own copy/layout) —
+                // only the hex values now match the rest of the app.
+                'mk-paper': '#131A28',
+                'mk-paper-2': '#0F1420',
+                'mk-ink': '#EDF0F5',
+                'mk-ink-2': '#8A93A6',
+                'mk-line': '#1E2738',
             },
             fontFamily: {
                 // "Redline" identity — real self-hosted variable webfonts.
@@ -54,6 +65,8 @@ export default {
                 'fh-card': '0 14px 30px -16px rgba(0,0,0,0.5)',
                 'fh-lift': '0 20px 40px -18px rgba(0,0,0,0.55)',
                 'fh-glow': '0 20px 45px -12px rgba(240,86,43,0.28), 0 4px 14px rgba(0,0,0,0.4)',
+                'mk-card': '0 14px 30px -16px rgba(0,0,0,0.5)',
+                'mk-lift': '0 20px 40px -18px rgba(0,0,0,0.55)',
             },
             keyframes: {
                 'fade-up': {

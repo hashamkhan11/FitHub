@@ -34,8 +34,35 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmed != true) return;
+    if (!context.mounted) return;
+
+    // The server-side logout call can take a moment; show a blocking
+    // spinner so the tap has visible feedback instead of the screen looking
+    // frozen. MainShell's auth listener replaces the whole route stack with
+    // LoginScreen once logout succeeds, which dismisses this dialog too —
+    // the explicit pop here only matters if logout throws before that.
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
       await ref.read(authProvider.notifier).logout();
+    } catch (_) {
+      // logout() only throws for a genuine local failure (e.g. secure
+      // storage) — auth state never changed, so MainShell's listener never
+      // fired and this dialog is still open. Dismiss it ourselves.
+      //
+      // On the success path we deliberately do NOT pop here: MainShell's
+      // pushAndRemoveUntil has already replaced the entire route stack
+      // (this dialog included) by the time logout() returns. Calling
+      // Navigator.pop() here as well raced that replacement — context.mounted
+      // was still true for one frame after the stack swap, so the pop landed
+      // on the freshly-pushed LoginScreen route instead of the dialog,
+      // leaving an empty Navigator (black screen).
+      if (context.mounted) Navigator.of(context, rootNavigator: true).pop();
     }
   }
 

@@ -3,12 +3,14 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../providers/auth_provider.dart';
 import '../providers/navigation_provider.dart';
 import '../theme/app_theme.dart';
 import 'attendance_screen.dart';
 import 'bmi_screen.dart';
 import 'classes_screen.dart';
 import 'home_screen.dart';
+import 'login_screen.dart';
 import 'progress_screen.dart';
 import 'settings_screen.dart';
 
@@ -35,6 +37,18 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    // Covers both the manual Log Out button and an automatic logout when a
+    // stale token gets a 401 — neither has a screen of its own to navigate
+    // from, so this is the one place that reacts to auth state changing.
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (!next.isLoggedIn) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    });
+
     final index = ref.watch(selectedTabProvider);
     _visited.add(index);
 

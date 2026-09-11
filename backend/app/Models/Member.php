@@ -132,6 +132,11 @@ class Member extends Authenticatable
         return $this->hasMany(Measurement::class);
     }
 
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
+    }
+
     public function fingerprintDevice(): BelongsTo
     {
         return $this->belongsTo(LockDevice::class, 'fingerprint_device_id');

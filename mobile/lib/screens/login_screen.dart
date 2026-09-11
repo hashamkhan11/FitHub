@@ -5,6 +5,7 @@ import '../providers/auth_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/logo_badge.dart';
 import 'forgot_password_screen.dart';
+import 'main_shell.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -30,6 +31,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _emailController.text.trim(),
             _passwordController.text,
           );
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const MainShell()),
+        );
+      }
     } catch (e) {
       setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -63,7 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const LogoBadge(circular: true, size: 64, fontSize: 22),
+                  const LogoBadge(size: 72, fontSize: 22),
                   const SizedBox(height: 18),
                   Text('FITHUB', style: AppTheme.display(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.ink)),
                   const SizedBox(height: 4),

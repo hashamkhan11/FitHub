@@ -13,6 +13,8 @@ use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Adds demo data to the FitHub gym for demo purposes. Run with `php artisan demo:seed-fithub`.
@@ -51,6 +53,9 @@ class SeedFitHubDemoData extends Command
         Member::where('email', 'test1@fithub.com')->update(['name' => 'Fatima Noor']);
         Member::where('email', 'mubarak@gmail.com')->update(['name' => 'Zainab Malik']);
 
+        $this->assignPhoto(Member::where('email', 'test1@fithub.com')->first(), 'women', 28);
+        $this->assignPhoto(Member::where('email', 'mubarak@gmail.com')->first(), 'women', 71);
+
         // Give the admin's demo member a trainer so the Home screen shows one.
         $trainer = User::where('email', 'trainer1@fithub.test')->first();
         if ($trainer) {
@@ -59,23 +64,44 @@ class SeedFitHubDemoData extends Command
     }
 
     /**
+     * Downloads a stock portrait photo for a demo member so the dashboard
+     * looks realistic in screenshots. Skips if the member already has one.
+     */
+    private function assignPhoto(?Member $member, string $gender, int $index): void
+    {
+        if (! $member || $member->photo_path) {
+            return;
+        }
+
+        $response = Http::timeout(10)->get("https://randomuser.me/api/portraits/{$gender}/{$index}.jpg");
+
+        if (! $response->successful()) {
+            return;
+        }
+
+        $path = "member-photos/demo-{$member->id}.jpg";
+        Storage::disk('public')->put($path, $response->body());
+        $member->update(['photo_path' => $path]);
+    }
+
+    /**
      * @return array<int, Member>
      */
     private function createMembers(Gym $gym): array
     {
         $roster = [
-            ['Ahmed Raza', '0301'],
-            ['Sana Malik', '0302'],
-            ['Bilal Hussain', '0303'],
-            ['Mahnoor Fatima', '0304'],
-            ['Hamza Sheikh', '0305'],
-            ['Iqra Yousaf', '0306'],
-            ['Waqas Ahmed', '0307'],
-            ['Aiza Khan', '0308'],
-            ['Danish Iqbal', '0309'],
-            ['Rabia Chaudhry', '0310'],
-            ['Faizan Butt', '0311'],
-            ['Hira Aslam', '0312'],
+            ['Ahmed Raza', '0301', 'men', 32],
+            ['Sana Malik', '0302', 'women', 33],
+            ['Bilal Hussain', '0303', 'men', 45],
+            ['Mahnoor Fatima', '0304', 'women', 44],
+            ['Hamza Sheikh', '0305', 'men', 22],
+            ['Iqra Yousaf', '0306', 'women', 21],
+            ['Waqas Ahmed', '0307', 'men', 11],
+            ['Aiza Khan', '0308', 'women', 12],
+            ['Danish Iqbal', '0309', 'men', 52],
+            ['Rabia Chaudhry', '0310', 'women', 55],
+            ['Faizan Butt', '0311', 'men', 61],
+            ['Hira Aslam', '0312', 'women', 65],
         ];
 
         $plans = Plan::where('gym_id', $gym->id)->get()->keyBy('name');
@@ -84,7 +110,7 @@ class SeedFitHubDemoData extends Command
 
         $created = [];
 
-        foreach ($roster as $i => [$name, $prefix]) {
+        foreach ($roster as $i => [$name, $prefix, $gender, $photoIndex]) {
             $email = strtolower(str_replace(' ', '.', $name)).'@example.pk';
 
             $member = Member::firstOrCreate(
@@ -97,6 +123,8 @@ class SeedFitHubDemoData extends Command
                     'join_date' => now()->subDays(60 - $i * 4)->toDateString(),
                 ]
             );
+
+            $this->assignPhoto($member, $gender, $photoIndex);
 
             if (! $member->wasRecentlyCreated) {
                 $created[] = $member;

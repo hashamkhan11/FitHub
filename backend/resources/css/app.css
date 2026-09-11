@@ -257,6 +257,76 @@
     .pf-stat-value {
         @apply font-mono text-3xl font-semibold tracking-tight tabular-nums text-ink;
     }
+
+    /* Marketing site (public homepage) — own class set (own copy/layout
+       needs), but now painted with the same dark "Redline" tokens as the
+       fh- and pf- app classes above so the public site reads as the same
+       product. */
+    .mk-eyebrow {
+        @apply font-mono uppercase tracking-[0.14em] text-xs font-semibold text-gold;
+    }
+    .mk-heading {
+        @apply font-display font-semibold tracking-tight text-mk-ink text-balance;
+    }
+    .mk-card {
+        @apply bg-mk-paper border border-mk-line rounded-lg shadow-mk-card p-6 transition hover:shadow-mk-lift hover:-translate-y-0.5;
+    }
+    .mk-input {
+        @apply w-full border border-mk-line rounded px-3 py-2.5 text-sm bg-mk-paper text-mk-ink placeholder:text-mk-ink-2/60 focus:outline-none focus:ring-2 focus:ring-gold/25 focus:border-gold transition;
+    }
+    .mk-btn-primary {
+        @apply inline-flex items-center justify-center gap-2 bg-gold text-white font-mono font-semibold uppercase tracking-wide text-sm px-4 py-2 rounded transition hover:bg-gold-2 active:brightness-95 disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .mk-btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 bg-transparent border border-mk-ink/20 text-mk-ink font-mono font-semibold uppercase tracking-wide text-sm px-4 py-2 rounded transition hover:border-mk-ink/40 hover:bg-mk-paper-2 disabled:opacity-50 disabled:pointer-events-none;
+    }
+    .mk-nav-link {
+        @apply text-mk-ink-2 hover:text-mk-ink transition;
+    }
+
+    /* Hairline-bordered stat row under the hero — the one "operator data"
+       motif borrowed from the dashboard, so the light site still reads as
+       the same product. */
+    .mk-stat-strip {
+        @apply flex flex-wrap gap-x-8 gap-y-2 border-y border-mk-line py-4 font-mono text-xs text-mk-ink-2;
+    }
+    .mk-stat-strip strong {
+        @apply text-mk-ink font-semibold tabular-nums mr-1.5;
+    }
+
+    /* Scroll-triggered entrance, staggered per element via --reveal-delay.
+       Gated behind .js-reveal-ready (added by the observer script only once
+       JS + IntersectionObserver are confirmed available) so content stays
+       visible with no JS / no motion support — this never hides content. */
+    .js-reveal-ready .mk-reveal {
+        opacity: 0;
+        transform: translateY(14px);
+        transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+        transition-delay: var(--reveal-delay, 0ms);
+    }
+    .js-reveal-ready .mk-reveal.is-visible {
+        opacity: 1;
+        transform: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .js-reveal-ready .mk-reveal {
+            transition: none;
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    /* "How it works" step — the number lifts and warms on hover so the
+       sequence feels touchable, not just decorative. */
+    .mk-step {
+        @apply transition duration-300;
+    }
+    .mk-step:hover .mk-step-num {
+        @apply -translate-y-0.5 text-gold-2;
+    }
+    .mk-step-num {
+        @apply transition duration-300;
+    }
 }
 
 @layer utilities {

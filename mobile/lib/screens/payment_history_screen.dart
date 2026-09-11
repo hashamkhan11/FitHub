@@ -78,10 +78,10 @@ class PaymentHistoryScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 6),
                               if (planName != null)
-                                Text(planName, style: AppTheme.mono(fontSize: 13, color: AppColors.steel2)),
+                                Text(planName, style: AppTheme.mono(fontSize: 13, color: AppColors.steel)),
                               Text(
                                 method[0].toUpperCase() + method.substring(1),
-                                style: AppTheme.mono(fontSize: 12, color: AppColors.steel2),
+                                style: AppTheme.mono(fontSize: 12, color: AppColors.steel),
                               ),
                             ],
                           ),
