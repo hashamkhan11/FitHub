@@ -13,7 +13,6 @@
 #define RELAY_PIN 27
 #define BOOT_BUTTON_PIN 0        // hold 3s at power-on to factory reset
 #define AP_SSID "OfficeDoor-Setup"
-#define AP_PASS "setup1234"
 #define MDNS_NAME "doorlock"     // -> http://doorlock.local/
 
 const unsigned long UNLOCK_PULSE_MS = 1000;
@@ -36,6 +35,18 @@ bool configured = false;
 String savedSsid, savedPass, adminUser, adminPass;
 String userNames[MAX_USERS], userPasses[MAX_USERS];
 int userCount = 0;
+String apPassword; // computed at boot, see deviceIdSuffix()
+
+// Short, deterministic string derived from the chip's own unique ID (not the
+// WiFi MAC, so this works before WiFi has ever been brought up). Used to
+// build a per-device setup AP password so every unit in the field doesn't
+// share the same "setup1234" - anyone who'd read it off one device's serial
+// console can't reuse it against another.
+String deviceIdSuffix() {
+    char buf[7];
+    snprintf(buf, sizeof(buf), "%06X", (uint32_t)(ESP.getEfuseMac() & 0xFFFFFF));
+    return String(buf);
+}
 
 struct LogEntry { String user; unsigned long atMillis; bool valid; };
 LogEntry activityLog[MAX_LOG];
@@ -397,6 +408,10 @@ void handleSerialCommands() {
         Serial.print(" users="); Serial.println(userCount);
         return;
     }
+    if (line == "appass") {
+        Serial.println("Setup AP password: " + apPassword);
+        return;
+    }
     if (line == "listusers") {
         Serial.println(adminUser + " (admin)");
         for (int i = 0; i < userCount; i++) Serial.println(userNames[i]);
@@ -431,19 +446,19 @@ void handleSerialCommands() {
         ESP.restart();
         return;
     }
-    Serial.println("commands: status | listusers | adduser name|pass | deluser name | resetwifi | factoryreset");
+    Serial.println("commands: status | appass | listusers | adduser name|pass | deluser name | resetwifi | factoryreset");
 }
 
 // ---------- boot ----------
 
 void startSetupMode() {
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(AP_SSID, AP_PASS);
+    WiFi.softAP(AP_SSID, apPassword.c_str());
     server.on("/", handleSetupRoot);
     server.on("/save", HTTP_POST, handleSetupSave);
     server.on("/manifest.json", handleManifest);
     server.begin();
-    Serial.println("Setup mode. Join WiFi '" AP_SSID "' (password " AP_PASS "), then visit http://192.168.4.1/");
+    Serial.println("Setup mode. Join WiFi '" AP_SSID "' (password " + apPassword + "), then visit http://192.168.4.1/");
 }
 
 const int WIFI_CONNECT_ATTEMPTS = 3;
@@ -495,6 +510,8 @@ void setup() {
     pinMode(RELAY_PIN, OUTPUT);
     digitalWrite(RELAY_PIN, LOW); // start locked
     pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);
+
+    apPassword = "door-" + deviceIdSuffix();
 
     loadConfig();
 
