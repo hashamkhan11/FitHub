@@ -58,7 +58,15 @@ factoryreset
 ## Notes
 
 - All config (WiFi, admin login, user list) is stored in the ESP32's flash
-  (`Preferences`) and survives power loss/reboots.
+  (`Preferences`) and survives power loss/reboots. Login passwords (admin and
+  per-user) are stored as a salted SHA-256 hash, never plaintext - only the
+  office WiFi password is kept plaintext, since the device needs it back to
+  join the network.
 - The setup AP password is derived per device from its chip ID (see
   `deviceIdSuffix()` in `src/main.cpp`) instead of a fixed string, so reading
   it off one unit doesn't give access to another.
+- Both the setup AP and the day-to-day admin page are plain HTTP - fine for a
+  private office LAN, but there's no transport encryption. Full TLS for a
+  device that's also its own captive portal (self-signed cert, client trust
+  prompts) is a bigger job than this firmware takes on; hashing at rest is
+  the practical fix here.
