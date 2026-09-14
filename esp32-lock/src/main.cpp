@@ -24,9 +24,17 @@ const unsigned long APP_UNLOCK_PULSE_MS = 2000; // how long an app-triggered unl
 const unsigned long POLL_INTERVAL_MS = 1000;   // how often we ask the server for commands
 const unsigned long WIFI_CONNECT_TIMEOUT_MS = 20000;
 
+// Manual relay test page (bypasses backend polling entirely) for bench-testing
+// the door hardware before a device is enrolled with a gym. It has no
+// authentication, so it must never ship in firmware flashed onto a real
+// door - build with `-D ENABLE_TEST_UNLOCK_SERVER` (see platformio.ini) only
+// when you're on a bench with the device on an isolated test WiFi.
+
 Preferences prefs;
 WebServer setupServer(80);
-WebServer testServer(81); // temporary manual relay test page, bypasses backend polling
+#ifdef ENABLE_TEST_UNLOCK_SERVER
+WebServer testServer(81);
+#endif
 
 HardwareSerial fingerSerial(2);
 Adafruit_Fingerprint finger(&fingerSerial);
@@ -223,6 +231,7 @@ void openLock() {
 
 void closeLock();
 
+#ifdef ENABLE_TEST_UNLOCK_SERVER
 void handleTestRoot() {
     testServer.send(200, "text/html",
         "<html><body style='font-family:Arial;text-align:center;padding-top:60px;background:#111;color:#eee'>"
@@ -242,6 +251,7 @@ void handleTestUnlock() {
     delay(1000);
     closeLock();
 }
+#endif
 
 void closeLock() {
     digitalWrite(RELAY_PIN, LOW);
@@ -747,17 +757,21 @@ void setup() {
     Serial.println(WiFi.localIP());
     Serial.println("Ready - polling server for lock commands.");
 
+#ifdef ENABLE_TEST_UNLOCK_SERVER
     testServer.on("/", handleTestRoot);
     testServer.on("/unlock", HTTP_POST, handleTestUnlock);
     testServer.begin();
     Serial.print("Manual relay test page: http://");
     Serial.print(WiFi.localIP());
     Serial.println(":81/");
+#endif
 }
 
 void loop() {
     handleSerialCommands();
+#ifdef ENABLE_TEST_UNLOCK_SERVER
     testServer.handleClient();
+#endif
 
     if (enrollState != ENROLL_NONE) {
         updateEnroll(); // enrollment owns the sensor - don't also run door-entry matching
